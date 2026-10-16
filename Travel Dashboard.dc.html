@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="ext-resource-dependency" content="idcube-mark.png" data-resource-id="idcubeMark" />
+<script src="travel-data.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:#EEF1F5;color:#0F1B2D;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  img,svg{max-width:100%;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#C7CFDB;border-radius:6px;border:2px solid #EEF1F5;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ===== entrance / chart motion ===== */
+  @keyframes fadeUp{from{transform:translateY(22px);}to{transform:translateY(0);}}
+  @keyframes growX{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+  @keyframes growY{from{transform:scaleY(0);}to{transform:scaleY(1);}}
+  @keyframes drawArc{from{stroke-dasharray:0 var(--cc);}to{stroke-dasharray:var(--len) var(--rest);}}
+  @keyframes popIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+  @keyframes sheen{from{left:-60%;}to{left:130%;}}
+
+  /* cards: lift + sheen sweep */
+  [data-card]{position:relative;overflow:hidden;transition:transform .32s cubic-bezier(.22,.7,.2,1), box-shadow .32s ease;will-change:transform;}
+  [data-card]:hover{transform:translateY(-5px);box-shadow:0 22px 50px rgba(16,27,45,.16);}
+  [data-card]::before{content:'';position:absolute;top:0;left:-60%;width:55%;height:100%;background:linear-gradient(105deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.5) 50%, rgba(255,255,255,0) 100%);transform:skewX(-18deg);opacity:0;pointer-events:none;z-index:3;}
+  [data-card]:hover::before{opacity:1;animation:sheen .85s ease;}
+  [data-kpi]::after{content:'';position:absolute;inset:0;border-radius:16px;background:radial-gradient(130% 130% at 100% 0%, rgba(255,255,255,.6), rgba(255,255,255,0) 45%);opacity:0;transition:opacity .3s ease;pointer-events:none;}
+  [data-kpi]:hover::after{opacity:1;}
+
+  /* ===== animated background ===== */
+  @keyframes drift1{0%{transform:translate(0,0) scale(1);}50%{transform:translate(70px,46px) scale(1.12);}100%{transform:translate(0,0) scale(1);}}
+  @keyframes drift2{0%{transform:translate(0,0) scale(1);}50%{transform:translate(-80px,54px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
+  @keyframes drift3{0%{transform:translate(0,0) scale(1);}50%{transform:translate(46px,-60px) scale(1.14);}100%{transform:translate(0,0) scale(1);}}
+  @keyframes gridDrift{from{background-position:0 0,0 0;}to{background-position:46px 46px,46px 46px;}}
+  .bg-field{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+  .aurora{position:absolute;border-radius:50%;filter:blur(64px);will-change:transform;}
+  .bg-grid{position:absolute;inset:-2px;background-image:linear-gradient(rgba(15,27,45,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(15,27,45,.045) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(125% 95% at 50% 0%, #000 28%, transparent 80%);mask-image:radial-gradient(125% 95% at 50% 0%, #000 28%, transparent 80%);animation:gridDrift 38s linear infinite;}
+  .bg-vignette{position:absolute;inset:0;background:radial-gradient(135% 115% at 50% -12%, transparent 52%, rgba(15,27,45,.06) 100%);}
+
+  /* ===== branded intro ===== */
+  @keyframes introLogo{0%{opacity:0;transform:scale(.6) translateY(10px);}60%{opacity:1;}100%{opacity:1;transform:scale(1) translateY(0);}}
+  @keyframes introGlow{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 26px 70px rgba(79,70,229,.42);}50%{box-shadow:0 0 0 1px rgba(255,255,255,.2), 0 26px 92px rgba(13,148,136,.55);}}
+  @keyframes introWord{from{opacity:0;transform:translateY(14px);letter-spacing:.12em;}to{opacity:1;transform:translateY(0);letter-spacing:-.02em;}}
+  @keyframes introFade{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes introLine{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+  @keyframes introOrb{0%{transform:translate(0,0);}50%{transform:translate(34px,-28px);}100%{transform:translate(0,0);}}
+  .intro-logo{animation:introLogo .7s cubic-bezier(.2,.8,.2,1) both, introGlow 2.4s ease-in-out infinite .7s;}
+  .intro-word{animation:introWord .6s cubic-bezier(.2,.8,.2,1) .25s both;}
+  .intro-sub{animation:introFade .6s ease .45s both;}
+  .intro-line{animation:introLine .7s cubic-bezier(.7,0,.2,1) .55s both;}
+  .intro-tag{animation:introFade .6s ease .72s both;}
+  .intro-orb{position:absolute;border-radius:50%;filter:blur(54px);animation:introOrb 7s ease-in-out infinite;}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important;}}
+</style>
+</helmet>
+<div class="bg-field" aria-hidden="true">
+  <div class="aurora" style="top:-190px;left:-70px;width:640px;height:640px;background:radial-gradient(circle at 30% 30%, rgba(79,70,229,.20), rgba(79,70,229,0) 68%);animation:drift1 26s ease-in-out infinite;"></div>
+  <div class="aurora" style="bottom:-230px;left:34%;width:700px;height:700px;background:radial-gradient(circle at 30% 30%, rgba(13,148,136,.17), rgba(13,148,136,0) 68%);animation:drift2 31s ease-in-out infinite;"></div>
+  <div class="aurora" style="top:6%;right:-170px;width:580px;height:580px;background:radial-gradient(circle at 30% 30%, rgba(245,158,11,.14), rgba(245,158,11,0) 68%);animation:drift3 28s ease-in-out infinite;"></div>
+  <div class="aurora" style="bottom:10%;right:14%;width:440px;height:440px;background:radial-gradient(circle at 30% 30%, rgba(139,92,246,.12), rgba(139,92,246,0) 70%);animation:drift1 34s ease-in-out infinite reverse;"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-vignette"></div>
+</div>
+<div style="position:relative;z-index:1;min-height:100%;">{{ app }}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const C = {
+  bg:'#EEF1F5', side:'#0E1726', sideHi:'#16233A', card:'#FFFFFF',
+  ink:'#0F1B2D', muted:'#6B7787', faint:'#9AA6B5', border:'#E6EAF0', track:'#EEF1F5',
+  flight:'#4F46E5', hotel:'#0D9488', accent:'#F59E0B',
+  cat:['#4F46E5','#0D9488','#F59E0B','#F43F5E','#8B5CF6','#0EA5E9','#10B981','#EC4899','#F97316','#0E7490','#6366F1','#64748B'],
+  mono:"'IBM Plex Mono',monospace"
+};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+class Component extends DCLogic {
+  state = { view:'overview', months:[], scope:'all', query:'', monthOpen:false, scrolled:false, cw:0, tSort:'total', cSort:'total', xSort:'expense', ready:!!(window.MMT_DATA), vw: (typeof window!=='undefined'?window.innerWidth:1200), tip:null, revealed:false, exit:false, introGone:false };
+
+  componentDidMount(){
+    this._introStart=(typeof performance!=='undefined'?performance.now():Date.now());
+    this._reduce=(typeof matchMedia!=='undefined') && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this._onResize = () => { const w=window.innerWidth; if((w<860)!==(this.state.vw<860)||Math.abs(w-this.state.vw)>40) this.setState({vw:w}); };
+    window.addEventListener('resize', this._onResize);
+    // capture:true also catches scroll on the embedding scroll container (scroll events don't bubble)
+    this._onScroll = (e) => { if(this.state.tip) this.setState({tip:null});
+      const t=e&&e.target, st=(t&&t.nodeType===1&&t.scrollTop!=null)?t.scrollTop:(window.scrollY||document.documentElement.scrollTop||0);
+      const s=st>6; if(s!==this.state.scrolled) this.setState({scrolled:s}); };
+    window.addEventListener('scroll', this._onScroll, {passive:true, capture:true});
+    // reconcile to the real viewport — the field-initializer vw can be stale in embeds/iframes that settle their size after construction
+    const syncVw=()=>{ this.setState({vw: window.innerWidth || this.state.vw}); };
+    requestAnimationFrame(syncVw); setTimeout(syncVw,180); setTimeout(syncVw,600);
+    // ResizeObserver reliably catches the post-load iframe sizing that fixed-delay timeouts miss
+    if(typeof ResizeObserver!=='undefined'){ this._ro=new ResizeObserver(syncVw); try{ this._ro.observe(document.documentElement); }catch(e){} }
+    if(window.MMT_DATA){ this.setState({ready:true}); return; }
+    // Poll for the global injected by the travel-data.js script (works on file:// where fetch is blocked)
+    let tries=0;
+    this._poll = setInterval(()=>{
+      tries++;
+      if(window.MMT_DATA){ clearInterval(this._poll); this.setState({ready:true}); return; }
+      if(tries>40){ // ~6s — fall back to fetch (works when served over http)
+        clearInterval(this._poll);
+        fetch('travel-data.js').then(r=>r.text()).then(t=>{
+          const i=t.indexOf('='); const json=t.slice(i+1).replace(/;\s*$/,'');
+          window.MMT_DATA=JSON.parse(json);
+          this.setState({ready:true});
+        }).catch(e=>{ console.error('data load failed',e); });
+      }
+    },150);
+  }
+  componentWillUnmount(){ if(this._onResize) window.removeEventListener('resize', this._onResize); if(this._onScroll) window.removeEventListener('scroll', this._onScroll, {capture:true}); if(this._cro) this._cro.disconnect(); if(this._poll) clearInterval(this._poll); if(this._ro) this._ro.disconnect(); [this._t1,this._t2,this._t3].forEach(t=>t&&clearTimeout(t)); }
+
+  // ===== cinematic boot + count-up engine =====
+  componentDidUpdate(){ if(this.state.ready) this.scheduleReveal(); this.runCountUps(); }
+  setRoot=(n)=>{
+    if(!n || n===this._root) return;
+    this._root=n;
+    if(typeof ResizeObserver!=='undefined'){
+      if(this._cro) this._cro.disconnect();
+      this._cro=new ResizeObserver(es=>{ const w=Math.round(es[0].contentRect.width);
+        if(w>0 && ((w<860)!==(this.state.cw<860) || Math.abs(w-(this.state.cw||0))>40)) this.setState({cw:w}); });
+      this._cro.observe(n);
+    }
+  };
+  scheduleReveal(){
+    if(this._revScheduled) return; this._revScheduled=true;
+    if(this._reduce){ this.setState({revealed:true,exit:true,introGone:true}); return; }
+    const now=(typeof performance!=='undefined'?performance.now():Date.now());
+    const wait=Math.max(0, 1400-(now-(this._introStart||now)));
+    this._t1=setTimeout(()=>this.setState({revealed:true}), wait);
+    this._t2=setTimeout(()=>this.setState({exit:true}), wait+180);
+    this._t3=setTimeout(()=>this.setState({introGone:true}), wait+1060);
+  }
+  skipIntro(){ if(this.state.introGone) return; [this._t1,this._t2,this._t3].forEach(t=>t&&clearTimeout(t)); this.setState({revealed:true,exit:true}); setTimeout(()=>this.setState({introGone:true}),700); }
+  animSig(){ return this.state.view+'|'+this.monthSel().join(',')+'|'+this.state.scope+'|'+(this.state.query||''); }
+  runCountUps(){
+    if(this._reduce || !this.state.revealed || typeof document==='undefined') return;
+    const sig=this.animSig(); if(sig===this._cuSig) return; this._cuSig=sig;
+    const root=this._root||document; const nodes=root.querySelectorAll('[data-cu]');
+    for(let i=0;i<nodes.length;i++) this.countUp(nodes[i]);
+  }
+  countUp(node){
+    const txt=node.textContent; const m=txt.match(/-?\d[\d,]*(\.\d+)?/); if(!m) return;
+    const numStr=m[0], pre=txt.slice(0,m.index), suf=txt.slice(m.index+numStr.length);
+    const hasComma=numStr.indexOf(',')>=0, dot=numStr.indexOf('.'), dec=dot>=0?numStr.length-dot-1:0;
+    const target=parseFloat(numStr.replace(/,/g,'')); if(!isFinite(target)) return;
+    if(node._cuRaf) cancelAnimationFrame(node._cuRaf); if(node._cuTo) clearTimeout(node._cuTo);
+    const dur=1050, t0=(typeof performance!=='undefined'?performance.now():Date.now());
+    const fmt=(v)=>{ const neg=v<0; v=Math.abs(v); let s=v.toFixed(dec), ip=s, fp=''; const di=s.indexOf('.'); if(di>=0){ ip=s.slice(0,di); fp=s.slice(di); } if(hasComma){ let l3=ip.slice(-3), rest=ip.slice(0,-3); rest=rest.replace(/\B(?=(\d{2})+(?!\d))/g,','); ip=(rest?rest+',':'')+l3; } return (neg?'-':'')+ip+fp; };
+    const ease=(t)=>1-Math.pow(1-t,3);
+    const tick=(nw)=>{ let p=(nw-t0)/dur; if(p>1)p=1; node.textContent=pre+fmt(target*ease(p))+suf; if(p<1){ node._cuRaf=requestAnimationFrame(tick); } else { node.textContent=txt; node._cuRaf=null; } };
+    node.textContent=txt;
+    node._cuRaf=requestAnimationFrame(()=>{ node.textContent=pre+fmt(0)+suf; node._cuRaf=requestAnimationFrame(tick); });
+    node._cuTo=setTimeout(()=>{ if(node._cuRaf){ cancelAnimationFrame(node._cuRaf); node._cuRaf=null; } node.textContent=txt; }, dur+260);
+  }
+  renderIntro(){
+    if(this.state.introGone) return null;
+    const h=React.createElement; const logo=(window.__resources&&window.__resources.idcubeMark)||'idcube-mark.png';
+    return h('div',{onClick:()=>this.skipIntro(),
+      style:{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',
+        background:'radial-gradient(125% 120% at 50% 28%, #19294A 0%, #0E1726 56%, #080D18 100%)',
+        transform:this.state.exit?'translateY(-102%)':'translateY(0)',
+        transition:'transform .85s cubic-bezier(.7,0,.18,1)',overflow:'hidden'}},
+      h('div',{className:'intro-orb',style:{top:'16%',left:'20%',width:300,height:300,background:'radial-gradient(circle,rgba(79,70,229,.5),transparent 70%)'}}),
+      h('div',{className:'intro-orb',style:{bottom:'14%',right:'18%',width:340,height:340,background:'radial-gradient(circle,rgba(13,148,136,.42),transparent 70%)',animationDelay:'1.6s'}}),
+      h('div',{style:{position:'relative',textAlign:'center',color:'#fff',padding:20}},
+        h('div',{className:'intro-logo',style:{width:88,height:88,margin:'0 auto 24px',borderRadius:22,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',padding:13,boxSizing:'border-box'}},
+          h('img',{src:logo,alt:'IDCUBE',style:{width:'100%',height:'100%',objectFit:'contain',display:'block'}})),
+        h('div',{className:'intro-word',style:{fontSize:36,fontWeight:700,letterSpacing:'-.02em',lineHeight:1}},'IDCUBE'),
+        h('div',{className:'intro-sub',style:{fontSize:12,letterSpacing:'.46em',textTransform:'uppercase',color:'#9AA8BC',marginTop:10,paddingLeft:'.46em'}},'Travel Spend Analyser'),
+        h('div',{style:{display:'flex',justifyContent:'center'}},
+          h('div',{className:'intro-line',style:{height:2,width:170,marginTop:28,background:'linear-gradient(90deg,#4F46E5,#0D9488,#F59E0B)',borderRadius:2,transformOrigin:'left'}})),
+        h('div',{className:'intro-tag',style:{fontSize:11.5,color:'#5E6C82',marginTop:20,letterSpacing:'.05em'}},'Preparing your travel spend intelligence\u2026')
+      )
+    );
+  }
+
+  // stagger entrance: clone the view's top-level rows with incremental fade-up delays
+  animate(el){
+    if(!el||!React.isValidElement(el)||!el.props||el.props.children==null) return el;
+    const kids=React.Children.toArray(el.props.children);
+    const out=kids.map((k,i)=> React.isValidElement(k)
+      ? React.cloneElement(k,{style:Object.assign({},k.props.style,{animation:'fadeUp .62s cubic-bezier(.22,.7,.2,1) both',animationDelay:(i*85)+'ms'})})
+      : k);
+    return React.cloneElement(el, {}, out);
+  }
+
+  vwLive(){
+    const cw=this.state.cw; if(cw) return cw;
+    const el=this._root && this._root.parentNode, pw=el && el.clientWidth;
+    if(pw) return pw;
+    return (typeof window!=='undefined' && window.innerWidth) ? window.innerWidth : this.state.vw;
+  }
+  mob(){ return this.vwLive() < 860; }
+  gx(desktop){ return this.mob() ? '1fr' : desktop; }
+
+  // ---------- data ----------
+  raw(){ const d=window.MMT_DATA||{}; return {flight:d.flight||[],hotel:d.hotel||[],train:d.train||[],wallet:d.wallet||[],actions:d.actions||{flight:[],hotel:[],train:[]}}; }
+  monthSel(){ return this.state.months||[]; }
+  inMonths(x){ const ms=this.monthSel(); return ms.length===0 || (x.created && ms.includes(x.created.slice(0,7))); }
+  q(){ return (this.state.query||'').trim().toLowerCase(); }
+  matchQ(rec, fields){ const q=this.q(); if(!q) return true; return fields.some(v=>{ if(v==null)return false; if(Array.isArray(v))return v.some(x=>String(x).toLowerCase().includes(q)); return String(v).toLowerCase().includes(q); }); }
+  filtered(){
+    const {scope}=this.state; const d=this.raw();
+    let flight=d.flight.filter(x=>this.inMonths(x)), hotel=d.hotel.filter(x=>this.inMonths(x)), train=d.train.filter(x=>this.inMonths(x));
+    if(scope==='dom'){ flight=flight.filter(f=>f.type==='Dom'); hotel=hotel.filter(h=>!h.intl); }
+    if(scope==='intl'){ flight=flight.filter(f=>f.type==='Intl'); hotel=hotel.filter(h=>h.intl); }
+    // global search
+    flight=flight.filter(f=>this.matchQ(f,[f.traveller,f.travellers,f.airline,f.bookingId,f.pnr,f.ticket,f.from,f.to]));
+    hotel=hotel.filter(x=>this.matchQ(x,[x.guest,x.guests,x.hotel,x.bookingId,x.pnr,x.city,x.country]));
+    train=train.filter(t=>this.matchQ(t,[t.traveller,t.travellers,t.trainName,t.bookingId,t.pnr,t.from,t.to]));
+    return {flight,hotel,train};
+  }
+  months(){ const s=new Set(); const d=this.raw(); d.flight.concat(d.hotel,d.train).forEach(x=>{ if(x.created) s.add(x.created.slice(0,7)); }); return [...s].sort(); }
+  fyOf(ym){ const y=+ym.slice(0,4), m=+ym.slice(5,7); return String(m>=4?y:y-1); }
+  fyLabel(fy){ fy=+fy; return 'FY '+fy+'-'+String(fy+1).slice(2); }
+  monthLabel(){ const ms=this.monthSel(); if(ms.length===0)return 'All periods'; if(ms.length===1)return this.ml(ms[0]);
+    const all=this.months(); const fys=[...new Set(ms.map(m=>this.fyOf(m)))].sort();
+    const full=fys.every(f=>all.filter(m=>this.fyOf(m)===f).every(m=>ms.includes(m))) && ms.length===all.filter(m=>fys.includes(this.fyOf(m))).length;
+    if(full) return fys.map(f=>this.fyLabel(f)).join(' + ');
+    return ms.length+' months'; }
+  toggleMonth(m){ const ms=this.monthSel().slice(); const i=ms.indexOf(m); if(i>=0)ms.splice(i,1); else ms.push(m); this.setState({months:ms}); }
+
+  // ---------- format ----------
+  inr(n){ n=Math.round(n||0); const neg=n<0; const s=String(Math.abs(n)); let l3=s.slice(-3), rest=s.slice(0,-3); rest=rest.replace(/\B(?=(\d{2})+(?!\d))/g,','); return (neg?'-':'')+'₹'+(rest?rest+',':'')+l3; }
+  cr(n){ n=n||0; const a=Math.abs(n); if(a>=1e7) return '₹'+(n/1e7).toFixed(2)+' Cr'; if(a>=1e5) return '₹'+(n/1e5).toFixed(2)+' L'; return this.inr(n); }
+  ml(ym){ const[y,m]=ym.split('-'); return MON[+m-1]+"'"+y.slice(2); }
+
+  // ---------- agg helpers ----------
+  groupSum(arr, keyFn){ const m={}; for(const x of arr){ const k=keyFn(x); if(k==null||k==='') continue; if(!m[k]) m[k]={key:k,count:0,spend:0,items:[]}; m[k].count++; m[k].spend+=(x.net||0); m[k].items.push(x); } return Object.values(m); }
+  sum(arr,f){ return arr.reduce((a,b)=>a+(f?f(b):b),0); }
+  avg(arr,f){ const v=arr.map(f).filter(x=>x!=null&&!isNaN(x)); return v.length? v.reduce((a,b)=>a+b,0)/v.length : 0; }
+
+  // ============ UI PRIMITIVES ============
+  h(){ return React.createElement.apply(null, arguments); }
+
+  // click-to-reveal exact figures on any bar / pie segment
+  isMoney(s){ return /₹|Cr| L\b|Lakh/.test(String(s||'')); }
+  showTip(e, title, lines){ if(e&&e.stopPropagation)e.stopPropagation(); const x=(e&&e.clientX)||0,y=(e&&e.clientY)||0; this.setState({tip:{x,y,title,lines:[].concat(lines).filter(Boolean)}}); }
+  renderTip(){
+    const h=React.createElement; const t=this.state.tip; if(!t) return null;
+    const vw=(typeof window!=='undefined'?window.innerWidth:1200), vh=(typeof window!=='undefined'?window.innerHeight:800);
+    const left=Math.max(8,Math.min(t.x+14, vw-228)), top=Math.max(8,Math.min(t.y+14, vh-90));
+    return h('div',null,
+      h('div',{onClick:()=>this.setState({tip:null}),style:{position:'fixed',inset:0,zIndex:60}}),
+      h('div',{style:{position:'fixed',left:left,top:top,zIndex:61,background:C.ink,color:'#fff',borderRadius:11,padding:'11px 14px',boxShadow:'0 12px 34px rgba(16,27,45,.34)',pointerEvents:'none',maxWidth:220}},
+        h('div',{style:{fontSize:11.5,fontWeight:600,opacity:.85,marginBottom:t.lines.length?6:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},t.title),
+        t.lines.map((l,i)=>h('div',{key:i,style:{fontFamily:C.mono,fontSize:14,fontWeight:600,lineHeight:1.4,whiteSpace:'nowrap'}},l))
+      )
+    );
+  }
+  // medium-width grid: 3-up on wide, 2-up on tablet, 1-up on mobile
+  gx3(){ return this.mob()? '1fr' : (this.vwLive()<1180? '1fr 1fr' : '1fr 1fr 1fr'); }
+
+  card(title, sub, body, extra){
+    const h=React.createElement;
+    return h('div',{'data-card':'1',style:Object.assign({background:'rgba(255,255,255,.8)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',borderRadius:14,padding:'18px 20px',border:'1px solid rgba(255,255,255,.6)',boxShadow:'0 1px 2px rgba(16,27,45,.05), 0 0 0 1px '+C.border}, extra&&extra.style)},
+      title!=null && h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14}},
+        h('div',null,
+          h('div',{style:{fontSize:14,fontWeight:600,letterSpacing:'.01em'}},title),
+          sub && h('div',{style:{fontSize:11.5,color:C.muted,marginTop:2}},sub)
+        ),
+        extra&&extra.right
+      ),
+      body
+    );
+  }
+
+  kpi(label, value, sub, color){
+    const h=React.createElement; color=color||C.flight;
+    return h('div',{'data-card':'1','data-kpi':'1',style:{background:'rgba(255,255,255,.82)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,.65)',borderRadius:16,padding:'17px 19px 16px',boxShadow:'0 1px 2px rgba(16,27,45,.05), 0 0 0 1px '+C.border,position:'relative',overflow:'hidden'}},
+      h('div',{style:{position:'absolute',left:0,top:0,bottom:0,width:4,background:'linear-gradient(180deg,'+color+','+color+'99)',zIndex:1,boxShadow:'0 0 16px '+color+'66'}}),
+      h('div',{style:{display:'flex',alignItems:'center',gap:7}},
+        h('span',{style:{width:7,height:7,borderRadius:2,background:color,flex:'none',boxShadow:'0 0 8px '+color+'aa'}}),
+        h('div',{style:{fontSize:10.5,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'.07em'}},label)),
+      h('div',{'data-cu':'1',style:{fontFamily:C.mono,fontSize:27,fontWeight:600,marginTop:9,letterSpacing:'-.02em',lineHeight:1,color:C.ink}},value),
+      sub && h('div',{style:{fontSize:11.5,color:C.faint,marginTop:7}},sub)
+    );
+  }
+
+  hbars(rows, opts){ // rows:[{label,value,valLabel,color,sub}]
+    opts=opts||{}; const h=React.createElement;
+    const max=Math.max(1,...rows.map(r=>r.value));
+    const lw=Math.min(opts.labelW||128, this.mob()?108:99999);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:opts.gap||12}},
+      rows.map((r,i)=>h('div',{key:i,onClick:(e)=>this.showTip(e, r.label, [ this.isMoney(r.valLabel)? this.inr(r.value) : (r.valLabel||String(r.value)) ]),style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}},
+        h('div',{style:{width:lw,flex:'none',fontSize:12.5,fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'},title:r.label},
+          r.label, r.sub && h('span',{style:{color:C.faint,fontWeight:400}},'  '+r.sub)),
+        h('div',{style:{flex:1,height:9,background:C.track,borderRadius:6,overflow:'hidden'}},
+          h('div',{style:{width:(r.value/max*100).toFixed(1)+'%',height:'100%',background:r.color||C.flight,borderRadius:6,transformOrigin:'left',transition:'width .5s ease',animation:'growX .7s cubic-bezier(.2,.75,.25,1)',animationDelay:(i*55+50)+'ms'}})),
+        h('div',{style:{width:opts.valW||86,flex:'none',textAlign:'right',fontFamily:C.mono,fontSize:12.5,fontWeight:500}},r.valLabel)
+      ))
+    );
+  }
+
+  donut(segs, centerTop, centerBot){
+    const h=React.createElement; const total=this.sum(segs,s=>s.value)||1;
+    const R=52,CC=2*Math.PI*R; let off=0;
+    const circles=segs.filter(s=>s.value>0).map((s,i)=>{ const len=s.value/total*CC; const dly=off/CC; const el=h('circle',{key:i,onClick:(e)=>this.showTip(e, s.label, [ this.isMoney(s.disp)? this.inr(s.value) : String(s.value), (s.value/total*100).toFixed(1)+'% of total' ]),style:{cursor:'pointer','--cc':CC,'--len':len,'--rest':(CC-len),strokeDasharray:len+' '+(CC-len),strokeDashoffset:-off,animation:'drawArc .6s cubic-bezier(.4,0,.2,1)',animationDelay:(dly*0.55+0.05).toFixed(3)+'s'},cx:70,cy:70,r:R,fill:'none',stroke:s.color,strokeWidth:16,transform:'rotate(-90 70 70)',strokeLinecap:'butt'}); off+=len; return el; });
+    return h('div',{style:{display:'flex',alignItems:'center',gap:22,flexWrap:'wrap'}},
+      h('div',{style:{position:'relative',width:140,height:140,flex:'none'}},
+        h('svg',{width:140,height:140,viewBox:'0 0 140 140',style:{animation:'popIn .5s cubic-bezier(.2,.8,.2,1)',transformOrigin:'center'}}, h('circle',{cx:70,cy:70,r:R,fill:'none',stroke:C.track,strokeWidth:16}), circles),
+        h('div',{style:{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}},
+          h('div',{'data-cu':'1',style:{fontFamily:C.mono,fontSize:17,fontWeight:600}},centerTop),
+          centerBot && h('div',{style:{fontSize:10.5,color:C.muted,marginTop:2}},centerBot))
+      ),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:9,flex:1,minWidth:120}},
+        segs.map((s,i)=>h('div',{key:i,onClick:(e)=>this.showTip(e, s.label, [ this.isMoney(s.disp)? this.inr(s.value) : String(s.value), (s.value/total*100).toFixed(1)+'% of total' ]),style:{display:'flex',alignItems:'center',gap:9,fontSize:12.5,cursor:'pointer'}},
+          h('span',{style:{width:10,height:10,borderRadius:3,background:s.color,flex:'none'}}),
+          h('span',{style:{flex:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},s.label),
+          h('span',{style:{fontFamily:C.mono,color:C.muted,fontWeight:500}},s.disp!=null?s.disp:s.value)
+        ))
+      )
+    );
+  }
+
+  columns(months, fSeries, hSeries, legA, legB){ // stacked spend per month
+    const h=React.createElement; const H=180;
+    legA=legA||['Flights',C.flight]; legB=legB||['Hotels',C.hotel];
+    const tot=months.map((m,i)=>(fSeries[i]||0)+(hSeries[i]||0)); const max=Math.max(1,...tot);
+    return h('div',null,
+      h('div',{style:{display:'flex',alignItems:'flex-end',gap:months.length>9?6:10,height:H,borderBottom:'1px solid '+C.border,paddingBottom:0}},
+        months.map((m,i)=>{ const f=fSeries[i]||0,ht=hSeries[i]||0;
+          return h('div',{key:i,onClick:(e)=>this.showTip(e, this.ml(m), [ ht>0?legB[0]+': '+this.inr(ht):null, f>0?legA[0]+': '+this.inr(f):null, 'Total: '+this.inr(f+ht) ]),style:{flex:1,display:'flex',flexDirection:'column',justifyContent:'flex-end',alignItems:'center',gap:0,height:'100%',cursor:'pointer'},title:this.ml(m)+': '+this.cr(f+ht)},
+            h('div',{style:{width:'100%',maxWidth:30,margin:'0 auto',display:'flex',flexDirection:'column',justifyContent:'flex-end',height:'100%',transformOrigin:'bottom',animation:'growY .65s cubic-bezier(.2,.75,.25,1)',animationDelay:(i*45+50)+'ms'}},
+              h('div',{style:{height:(ht/max*H)+'px',background:C.hotel,borderRadius:'4px 4px 0 0'}}),
+              h('div',{style:{height:(f/max*H)+'px',background:C.flight,borderRadius:ht>0?0:'4px 4px 0 0'}})
+            )
+          );
+        })
+      ),
+      h('div',{style:{display:'flex',gap:months.length>9?6:10,marginTop:7}},
+        months.map((m,i)=>h('div',{key:i,style:{flex:1,textAlign:'center',fontSize:10,color:C.muted,fontFamily:C.mono}},this.ml(m).replace("'"," '")))
+      ),
+      h('div',{style:{display:'flex',gap:18,marginTop:14,fontSize:12}},
+        [legB,legA].map(([l,c],i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:7}},
+          h('span',{style:{width:10,height:10,borderRadius:3,background:c}}),l))
+      )
+    );
+  }
+
+  table(cols, allRows, sortKey, onSort){
+    const h=React.createElement;
+    const LIMIT=12; const tk=this.state.view+'|'+cols.map(c=>c.label).join(',');
+    const open=!!(this.state.expanded||{})[tk]; const extra=allRows.length-LIMIT;
+    const rows=(extra>0&&!open)?allRows.slice(0,LIMIT):allRows;
+    if(extra>0){
+      const btn=h('div',{style:{display:'flex',justifyContent:'center',paddingTop:14}},
+        h('button',{onClick:()=>this.setState(s=>({expanded:Object.assign({},s.expanded,{[tk]:!open})})),
+          onMouseEnter:e=>{e.currentTarget.style.background=C.flight;e.currentTarget.style.color='#fff';},onMouseLeave:e=>{e.currentTarget.style.background='#fff';e.currentTarget.style.color=C.flight;},
+          style:{display:'flex',alignItems:'center',gap:7,border:'1px solid '+C.border,background:'#fff',color:C.flight,borderRadius:20,padding:'7px 18px',fontSize:12.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'background .15s, color .15s',boxShadow:'0 1px 2px rgba(16,27,45,.05)'}},
+          open?'Show less':'See more · '+extra+' more',
+          h('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.4,strokeLinecap:'round',strokeLinejoin:'round',style:{transform:open?'rotate(180deg)':'none',transition:'transform .2s'}},h('path',{d:'M6 9l6 6 6-6'}))));
+      return h('div',null,this.tableInner(cols,rows,sortKey,onSort),btn);
+    }
+    return this.tableInner(cols,rows,sortKey,onSort);
+  }
+  tableInner(cols, rows, sortKey, onSort){
+    const h=React.createElement;
+    // --- mobile: render each row as a stacked card instead of a wide scrolling table ---
+    if(this.mob()){
+      const titleCol=cols.find(c=>c.bold)||cols[0];
+      const rest=cols.filter(c=>c!==titleCol);
+      const sortable=cols.filter(c=>c.sort);
+      const ctrl=(onSort&&sortable.length)? h('div',{style:{display:'flex',flexWrap:'wrap',gap:6,marginBottom:12}},
+        h('span',{style:{fontSize:10.5,fontWeight:600,color:C.faint,textTransform:'uppercase',letterSpacing:'.05em',alignSelf:'center',marginRight:2}},'Sort'),
+        sortable.map(c=>{ const on=sortKey===c.sort; return h('button',{key:c.sort,onClick:()=>onSort(c.sort),style:{border:'1px solid '+(on?C.flight:C.border),background:on?C.flight:'#fff',color:on?'#fff':C.muted,borderRadius:7,padding:'5px 10px',fontSize:11.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}, c.label); })
+      ):null;
+      return h('div',null, ctrl,
+        h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+          rows.map((r,ri)=>h('div',{key:ri,style:{border:'1px solid '+C.border,borderRadius:11,padding:'12px 14px',background:'#fff'}},
+            h('div',{style:{fontSize:13.5,fontWeight:700,marginBottom:rest.length?9:0,letterSpacing:'-.01em'}}, titleCol.render?titleCol.render(r):r[titleCol.key]),
+            rest.length? h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 14px'}},
+              rest.map((c,ci)=>h('div',{key:ci,style:{display:'flex',flexDirection:'column',gap:2,minWidth:0}},
+                h('span',{style:{fontSize:9.5,fontWeight:600,color:C.faint,textTransform:'uppercase',letterSpacing:'.04em',whiteSpace:'nowrap'}}, c.label),
+                h('span',{style:{fontSize:13,fontFamily:c.num?C.mono:'inherit',fontWeight:c.bold?600:500,color:c.fade?C.muted:C.ink,overflow:'hidden',textOverflow:'ellipsis'}}, c.render?c.render(r):(r[c.key]!=null?r[c.key]:'–'))
+              ))
+            ):null
+          ))
+        )
+      );
+    }
+    return h('div',{style:{overflowX:'auto',WebkitOverflowScrolling:'touch'}},
+      h('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12.5}},
+        h('thead',null, h('tr',null, cols.map((c,i)=>h('th',{key:i,onClick:c.sort&&onSort?()=>onSort(c.sort):undefined,
+          style:{textAlign:c.num?'right':'left',padding:'8px 12px',fontSize:10.5,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'.05em',borderBottom:'1px solid '+C.border,cursor:c.sort?'pointer':'default',whiteSpace:'nowrap',userSelect:'none'}},
+          c.label, c.sort&&sortKey===c.sort?h('span',{style:{color:C.flight}},' ▾'):''))) ),
+        h('tbody',null, rows.map((r,ri)=>h('tr',{key:ri,style:{background:ri%2?'#FAFBFD':'#fff'}},
+          cols.map((c,ci)=>h('td',{key:ci,style:{padding:'9px 12px',textAlign:c.num?'right':'left',fontFamily:c.num?C.mono:'inherit',fontWeight:c.bold?600:400,color:c.fade?C.muted:C.ink,whiteSpace:'nowrap',borderBottom:'1px solid '+C.border}},
+            c.render?c.render(r):r[c.key]))
+        )))
+      )
+    );
+  }
+
+  // ============ PEOPLE / SPLITS ============
+  ppl(r){ const a=r.travellers||r.guests; if(a&&a.length) return a; const one=r.traveller||r.guest; return one?[one]:[]; }
+  travellerRows(flight,hotel,train){
+    const m={}; const get=k=>{ if(!m[k])m[k]={name:k,flights:0,fSpend:0,nights:0,hSpend:0,trains:0,tSpend:0,intl:0,shared:0}; return m[k]; };
+    flight.forEach(f=>{ const p=this.ppl(f), n=p.length; p.forEach(k=>{ const t=get(k); t.flights++; t.fSpend+=f.net/n; if(f.type==='Intl')t.intl++; if(n>1)t.shared++; }); });
+    hotel.forEach(x=>{ const p=this.ppl(x), n=p.length; p.forEach(k=>{ const t=get(k); t.nights+=n>1?x.nights:x.nights*x.rooms; t.hSpend+=x.net/n; if(n>1)t.shared++; }); });
+    train.forEach(x=>{ const p=this.ppl(x), n=p.length; p.forEach(k=>{ const t=get(k); t.trains++; t.tSpend+=x.net/n; if(n>1)t.shared++; }); });
+    return Object.values(m).map(t=>(t.total=t.fSpend+t.hSpend+t.tSpend,t));
+  }
+  cancelRows(cf,ch,ct){
+    const out=[]; const push=(r,type,detail,sub,date)=>{ const p=this.ppl(r), n=p.length||1; (p.length?p:['']).forEach(who=>out.push({who,n,with:p.filter(x=>x!==who).join(', '),type,detail,sub,date,bookingId:r.bookingId,booked:r.gross/n,refund:-r.refund/n,expense:r.net/n})); };
+    cf.forEach(f=>push(f,'Flight',f.airline,(f.from&&f.to)?f.from+' → '+f.to:f.journey,f.created));
+    ch.forEach(x=>push(x,'Hotel',x.hotel,x.city,x.checkin||x.created));
+    ct.forEach(x=>push(x,'Rail',x.trainName,(x.from&&x.to)?x.from+' → '+x.to:'',x.created));
+    return out;
+  }
+  cityRows(flight,hotel){
+    const m={}; const get=k=>{ if(!m[k])m[k]={city:k,stays:0,nights:0,hSpend:0,flights:0,fSpend:0}; return m[k]; };
+    hotel.forEach(x=>{ if(!x.city)return; const c=get(x.city); c.stays++; c.nights+=x.nights*x.rooms; c.hSpend+=x.net; });
+    flight.forEach(f=>{ if(!f.to)return; const c=get(f.to); c.flights++; c.fSpend+=f.net; });
+    return Object.values(m).map(c=>(c.total=c.hSpend+c.fSpend,c));
+  }
+  actionRows(){
+    const {scope}=this.state; const raw=this.raw();
+    let fA=raw.actions.flight.filter(x=>this.inMonths(x)), hA=raw.actions.hotel.filter(x=>this.inMonths(x)), tA=raw.actions.train.filter(x=>this.inMonths(x));
+    if(scope==='dom'){ fA=fA.filter(a=>a.type==='Dom'); hA=hA.filter(a=>a.country==='India'); }
+    if(scope==='intl'){ fA=fA.filter(a=>a.type==='Intl'); hA=hA.filter(a=>a.country&&a.country!=='India'); tA=[]; }
+    if(this.q()){ fA=fA.filter(a=>this.matchQ(a,[a.travellers,a.airline,a.bookingId,a.pnr,a.from,a.to])); hA=hA.filter(a=>this.matchQ(a,[a.travellers,a.hotel,a.bookingId,a.pnr,a.city])); tA=tA.filter(a=>this.matchQ(a,[a.travellers,a.trainName,a.bookingId,a.pnr])); }
+    return [...fA.map(a=>Object.assign({modeL:'Flight',detail:a.airline,where:(a.from&&a.to)?a.from+' - '+a.to:''},a)),...hA.map(a=>Object.assign({modeL:'Hotel',detail:a.hotel,where:a.city},a)),...tA.map(a=>Object.assign({modeL:'Rail',detail:a.trainName,where:(a.from&&a.to)?a.from+' - '+a.to:''},a))]
+      .sort((a,b)=>String(b.created||'').localeCompare(String(a.created||'')));
+  }
+
+  // ============ EXPORT (Excel / PDF) ============
+  fmtD(d){ if(!d) return ''; const p=String(d).slice(0,10).split('-'); return p.length<3?String(d):p[2]+'-'+MON[+p[1]-1]+'-'+p[0]; }
+  numIN(n){ n=Math.round(n||0); const neg=n<0; const s=String(Math.abs(n)); let l3=s.slice(-3), rest=s.slice(0,-3); rest=rest.replace(/\B(?=(\d{2})+(?!\d))/g,','); return (neg?'-':'')+(rest?rest+',':'')+l3; }
+  filterNote(){ const sc={all:'All travel',dom:'Domestic only',intl:'International only'}[this.state.scope]; const ms=this.monthSel().slice().sort(); return [sc, ms.length?('Period: '+this.monthLabel()+(/FY/.test(this.monthLabel())?'':' ('+ms.map(m=>this.ml(m)).join(', ')+')')):'All periods', this.q()?('Search: "'+this.state.query.trim()+'"'):null].filter(Boolean).join('  |  '); }
+  exportSpec(view){
+    const {flight,hotel,train}=this.filtered(); const raw=this.raw();
+    const names=r=>this.ppl(r).join(', '), nP=r=>this.ppl(r).length||1, share=r=>r.net/nP(r);
+    const T=(h,k,t,o)=>Object.assign({h,k,t:t||'text'},o||{});
+    const desc=(a,k)=>a.slice().sort((x,y)=>String(y[k]||'').localeCompare(String(x[k]||'')));
+    const fCols=[T('Booking ID','bookingId'),T('PNR','pnr'),T('Booked On',r=>this.fmtD(r.created)),T('Departure',r=>this.fmtD(r.depart)),T('Traveller(s)',names,'text',{w:34}),T('Pax',nP,'int'),T('Airline','airline'),T('Type',r=>r.type==='Intl'?'International':'Domestic'),T('From','from'),T('To','to'),T('Journey','journey'),T('Class','cls'),T('Status','status'),T('Booked (INR)','gross','inr',{sum:1}),T('Refunded (INR)',r=>-r.refund,'inr',{sum:1}),T('Net Spend (INR)','net','inr',{sum:1}),T('Per Person (INR)',share,'inr')];
+    const hCols=[T('Booking ID','bookingId'),T('Booked On',r=>this.fmtD(r.created)),T('Check-in',r=>this.fmtD(r.checkin)),T('Guest(s)',names,'text',{w:34}),T('Guests',nP,'int'),T('Hotel','hotel','text',{w:34}),T('City','city'),T('Country','country'),T('Star',r=>r.star||'','int'),T('Meal Plan','mealCat'),T('Nights','nights','int',{sum:1}),T('Rooms','rooms','int'),T('Status','status'),T('Booked (INR)','gross','inr',{sum:1}),T('Refunded (INR)',r=>-r.refund,'inr',{sum:1}),T('Net Spend (INR)','net','inr',{sum:1}),T('Per Guest (INR)',share,'inr')];
+    const tCols=[T('Booking ID','bookingId'),T('PNR','pnr'),T('Booked On',r=>this.fmtD(r.created)),T('Travel Date',r=>this.fmtD(r.travel)),T('Traveller(s)',names,'text',{w:34}),T('Pax',nP,'int'),T('Train','trainName'),T('From','from'),T('To','to'),T('Class','cls'),T('Status','status'),T('Booked (INR)','gross','inr',{sum:1}),T('Refunded (INR)',r=>-r.refund,'inr',{sum:1}),T('Net Spend (INR)','net','inr',{sum:1}),T('Per Person (INR)',share,'inr')];
+    const pCols=[T('Traveller','name','text',{w:32}),T('Flights','flights','int',{sum:1}),T('International','intl','int',{sum:1}),T('Hotel Nights','nights','int',{sum:1}),T('Train Trips','trains','int',{sum:1}),T('Shared Bookings','shared','int'),T('Flight Spend (INR)','fSpend','inr',{sum:1}),T('Hotel Spend (INR)','hSpend','inr',{sum:1}),T('Rail Spend (INR)','tSpend','inr',{sum:1}),T('Total Spend (INR)','total','inr',{sum:1})];
+    const grp=(arr,kf)=>{ const m={}; arr.forEach(x=>{ const k=kf(x); if(!k)return; if(!m[k])m[k]={key:k,count:0,spend:0,nights:0}; m[k].count++; m[k].spend+=x.net; m[k].nights+=(x.nights||0)*(x.rooms||1); }); return Object.values(m).sort((a,b)=>b.spend-a.spend); };
+    const months=this.months().filter(m=>{ const ms=this.monthSel(); return !ms.length||ms.includes(m); });
+    const byM=(a,m)=>this.sum(a.filter(x=>x.created&&x.created.slice(0,7)===m),x=>x.net);
+    const people=this.travellerRows(flight,hotel,train).sort((a,b)=>b.total-a.total);
+    const S=(name,cols,rows)=>({name,cols,rows});
+    switch(view){
+      case 'overview': {
+        const fS=this.sum(flight,x=>x.net),hS=this.sum(hotel,x=>x.net),tS=this.sum(train,x=>x.net);
+        const kv=[['Total Travel Spend (INR)',fS+hS+tS],['Flight Spend (INR)',fS],['Hotel Spend (INR)',hS],['Rail Spend (INR)',tS],['Flight Bookings',flight.length],['Hotel Bookings',hotel.length],['Rail Bookings',train.length],['Unique Travellers',people.length],['Cancelled Bookings',[...flight,...hotel,...train].filter(x=>x.cancelled).length],['Wallet Balance (INR)',raw.wallet.length?raw.wallet[raw.wallet.length-1].balance:0]].map(([k,v])=>({k,v}));
+        return [S('Summary',[T('Metric','k','text',{w:30}),T('Value','v','inr')],kv),
+          S('Monthly Spend',[T('Month',r=>this.ml(r.m).replace("'"," 20")),T('Flights (INR)','f','inr',{sum:1}),T('Hotels (INR)','h','inr',{sum:1}),T('Rail (INR)','t','inr',{sum:1}),T('Total (INR)',r=>r.f+r.h+r.t,'inr',{sum:1})],months.map(m=>({m,f:byM(flight,m),h:byM(hotel,m),t:byM(train,m)}))),
+          S('Top Travellers',pCols,people.slice(0,25))];
+      }
+      case 'flights': return [S('Flight Bookings',fCols,desc(flight,'created')),
+        S('Airline Summary',[T('Airline','key','text',{w:28}),T('Bookings','count','int',{sum:1}),T('Avg Fare (INR)',r=>r.spend/r.count,'inr'),T('Net Spend (INR)','spend','inr',{sum:1})],grp(flight,x=>x.airline)),
+        S('Route Summary',[T('Route','key','text',{w:34}),T('Trips','count','int',{sum:1}),T('Avg Fare (INR)',r=>r.spend/r.count,'inr'),T('Net Spend (INR)','spend','inr',{sum:1})],grp(flight,x=>x.from&&x.to?x.from+' - '+x.to:''))];
+      case 'hotels': return [S('Hotel Bookings',hCols,desc(hotel,'created')),
+        S('City Summary',[T('City','key','text',{w:24}),T('Stays','count','int',{sum:1}),T('Room Nights','nights','int',{sum:1}),T('Avg / Night (INR)',r=>r.spend/(r.nights||1),'inr'),T('Net Spend (INR)','spend','inr',{sum:1})],grp(hotel,x=>x.city)),
+        S('Property Summary',[T('Hotel','key','text',{w:40}),T('Stays','count','int',{sum:1}),T('Room Nights','nights','int',{sum:1}),T('Net Spend (INR)','spend','inr',{sum:1})],grp(hotel,x=>x.hotel))];
+      case 'train': return [S('Rail Bookings',tCols,desc(train,'created')),
+        S('Train Summary',[T('Train','key','text',{w:28}),T('Bookings','count','int',{sum:1}),T('Net Spend (INR)','spend','inr',{sum:1})],grp(train,x=>x.trainName))];
+      case 'wallet': {
+        const w=raw.wallet.filter(x=>this.inMonths({created:x.date})).filter(x=>this.matchQ(x,[x.txnId,x.reason,x.type])).slice().reverse();
+        return [S('Wallet Transactions',[T('Date',r=>this.fmtD(r.date)),T('Transaction ID','txnId','text',{w:26}),T('Type','type'),T('Reason','reason','text',{w:22}),T('Debit (INR)',r=>r.type==='DEBIT'?r.amount:'','inr',{sum:1}),T('Credit (INR)',r=>r.type!=='DEBIT'?r.amount:'','inr',{sum:1}),T('Balance (INR)','balance','inr'),T('Settlement','settlement'),T('Settled On',r=>this.fmtD(r.settleDate))],w)];
+      }
+      case 'travelers': {
+        const merges=Object.entries(raw.nameMerges||{}).map(([k,v])=>({k,v:v.join('; ')})).sort((a,b)=>a.k.localeCompare(b.k));
+        return [S('Traveller Spend',pCols,people),S('Merged Name Variants',[T('Traveller (as shown)','k','text',{w:34}),T('Variants merged from source','v','text',{w:60})],merges)];
+      }
+      case 'cities': return [S('City Breakdown',[T('City','city','text',{w:24}),T('Flights In','flights','int',{sum:1}),T('Flight Spend (INR)','fSpend','inr',{sum:1}),T('Hotel Stays','stays','int',{sum:1}),T('Room Nights','nights','int',{sum:1}),T('Hotel Spend (INR)','hSpend','inr',{sum:1}),T('Total Spend (INR)','total','inr',{sum:1})],this.cityRows(flight,hotel).sort((a,b)=>b.total-a.total))];
+      case 'cancellations': {
+        const rows=this.cancelRows(flight.filter(f=>f.cancelled),hotel.filter(x=>x.cancelled),train.filter(x=>x.cancelled)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+        return [S('Cancellations',[T('Traveller','who','text',{w:28}),T('Shared With','with','text',{w:28}),T('Type','type'),T('Booking ID','bookingId'),T('Airline / Hotel / Train','detail','text',{w:30}),T('Route / City',r=>String(r.sub||'').replace(' → ',' - '),'text',{w:24}),T('Date',r=>this.fmtD(r.date)),T('Booked (INR)','booked','inr',{sum:1}),T('Refunded (INR)','refund','inr',{sum:1}),T('Net Expense (INR)','expense','inr',{sum:1})],rows)];
+      }
+      case 'actions': return [S('Booking Actions',[T('Date',r=>this.fmtD(r.created)),T('Mode','modeL'),T('Action',r=>String(r.action||'').replace(/_/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())),T('Booking ID','bookingId'),T('PNR','pnr'),T('Traveller(s)',names,'text',{w:30}),T('Airline / Hotel / Train','detail','text',{w:28}),T('Route / City','where','text',{w:24}),T('Net Amount (INR)','net','inr',{sum:1}),T('Penalty (INR)','penalty','inr',{sum:1})],this.actionRows())];
+      case 'search': return [S('Flights',fCols,desc(flight,'created')),S('Hotels',hCols,desc(hotel,'created')),S('Rail',tCols,desc(train,'created'))].filter(s=>s.rows.length);
+    }
+    return [];
+  }
+  cellVal(c,r){ const v=typeof c.k==='function'?c.k(r):r[c.k]; if(c.t==='inr'||c.t==='int') return (v===''||v==null)?'':Math.round(+v||0); return v==null?'':String(v); }
+  loadLib(src,test){ if(test()) return Promise.resolve(); return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('Could not load '+src)); document.head.appendChild(s); }); }
+  async doExport(kind){
+    if(this.state.exporting) return;
+    const view=this.state.view; const title=(this.TITLES[view]||[view])[0]; const sheets=this.exportSpec(view);
+    this.setState({exporting:kind});
+    try{
+      if(kind==='xlsx') await this.exportXlsx(title,sheets); else await this.exportPdf(title,sheets);
+    }catch(e){ console.error(e); alert('Export failed: '+e.message); }
+    this.setState({exporting:null});
+  }
+  async exportXlsx(title,sheets){
+    await this.loadLib('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',()=>!!window.XLSX);
+    const X=window.XLSX; const wb=X.utils.book_new(); const used={};
+    sheets.forEach(s=>{
+      const body=s.rows.map(r=>s.cols.map(c=>this.cellVal(c,r)));
+      const hasSum=s.cols.some(c=>c.sum)&&body.length>1;
+      const aoa=[s.cols.map(c=>c.h),...body]; if(hasSum) aoa.push(s.cols.map((c,i)=>i===0?'TOTAL':(c.sum?body.reduce((a,r)=>a+(+r[i]||0),0):'')));
+      const ws=X.utils.aoa_to_sheet(aoa);
+      for(let ri=1;ri<aoa.length;ri++) s.cols.forEach((c,ci)=>{ if(c.t==='inr'){ const cell=ws[X.utils.encode_cell({r:ri,c:ci})]; if(cell&&cell.t==='n') cell.z='#,##,##0'; } });
+      ws['!cols']=s.cols.map((c,i)=>({wch:c.w||Math.min(40,Math.max(c.h.length+2,...body.slice(0,300).map(r=>String(r[i]).length+2)))}));
+      if(body.length) ws['!autofilter']={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:body.length,c:s.cols.length-1}})};
+      let nm=s.name.replace(/[\[\]\*\?\/\\:]/g,'').slice(0,31); if(used[nm]) nm=nm.slice(0,28)+' '+(++used[nm]); used[nm]=1;
+      X.utils.book_append_sheet(wb,ws,nm);
+    });
+    const info=X.utils.aoa_to_sheet([['Report',title],['Source','IDCUBE Travel Spend Analyser'],['Filters',this.filterNote()],['Generated',this.fmtD(new Date().toISOString())],['Note','Bookings with multiple travellers / guests are split equally between them in per-person figures. Duplicate name spellings are merged into one traveller.']]);
+    info['!cols']=[{wch:14},{wch:100}]; X.utils.book_append_sheet(wb,info,'Report Info');
+    X.writeFile(wb,title+'.xlsx');
+  }
+  async exportPdf(title,sheets){
+    await this.loadLib('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',()=>!!(window.jspdf&&window.jspdf.jsPDF));
+    await this.loadLib('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js',()=>!!(window.jspdf.jsPDF.API&&window.jspdf.jsPDF.API.autoTable));
+    const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'}); const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(); const M=28;
+    doc.setFillColor(15,23,38); doc.rect(0,0,W,64,'F');
+    doc.setTextColor(154,168,188); doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.text('IDCUBE  ·  TRAVEL SPEND ANALYSER'.replace('·','-'),M,22);
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text(title,M,46);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(154,168,188); doc.text('Generated '+this.fmtD(new Date().toISOString()),W-M,46,{align:'right'});
+    doc.setTextColor(107,119,135); doc.setFontSize(8.5); doc.text(this.filterNote()+'  |  Shared bookings split equally per traveller',M,82);
+    let y=100;
+    sheets.forEach((s,si)=>{
+      if(y>H-90){ doc.addPage(); y=40; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(15,27,45); doc.text(s.name+'  ('+s.rows.length+')',M,y); y+=8;
+      const fmt=(c,v)=>(c.t==='inr'||c.t==='int')&&v!==''?this.numIN(v):String(v);
+      const body=s.rows.map(r=>s.cols.map(c=>fmt(c,this.cellVal(c,r))));
+      const hasSum=s.cols.some(c=>c.sum)&&s.rows.length>1;
+      const foot=hasSum?[s.cols.map((c,i)=>i===0?'TOTAL':(c.sum?this.numIN(this.sum(s.rows,r=>+this.cellVal(c,r)||0)):''))]:undefined;
+      const colStyles={}; s.cols.forEach((c,i)=>{ if(c.t==='inr'||c.t==='int') colStyles[i]={halign:'right'}; });
+      const many=s.cols.length;
+      doc.autoTable({startY:y,head:[s.cols.map(c=>c.h)],body:body.length?body:[[{content:'No records for the current filters',colSpan:many,styles:{halign:'center',textColor:[107,119,135]}}]],foot,showFoot:'lastPage',theme:'grid',margin:{left:M,right:M,top:36,bottom:34},
+        styles:{font:'helvetica',fontSize:many>14?6.4:many>9?7.4:8.6,cellPadding:many>14?2.6:3.6,textColor:[15,27,45],lineColor:[226,231,238],lineWidth:.4,overflow:'linebreak',valign:'middle'},
+        headStyles:{fillColor:[15,27,45],textColor:[255,255,255],fontStyle:'bold',halign:'left'},footStyles:{fillColor:[238,241,245],textColor:[15,27,45],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[248,250,252]},columnStyles:colStyles,
+        didParseCell:d=>{ if((d.section==='head'||d.section==='foot')&&colStyles[d.column.index]) d.cell.styles.halign='right'; }});
+      y=doc.lastAutoTable.finalY+28;
+    });
+    const n=doc.getNumberOfPages();
+    for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(154,166,181); doc.text(title+'  -  IDCUBE Travel Spend Analyser',M,H-16); doc.text('Page '+i+' of '+n,W-M,H-16,{align:'right'}); }
+    doc.save(title+'.pdf');
+  }
+
+  // ============ VIEWS ============
+  view_overview(){
+    const h=React.createElement; const {flight,hotel,train}=this.filtered();
+    const fSpend=this.sum(flight,f=>f.net), hSpend=this.sum(hotel,x=>x.net), tSpend=this.sum(train,t=>t.net), total=fSpend+hSpend+tSpend;
+    const bookings=flight.length+hotel.length+train.length;
+    const travelers=new Set([...flight,...hotel,...train].flatMap(r=>this.ppl(r))).size;
+    const cancels=flight.filter(f=>f.cancelled).length+hotel.filter(x=>x.cancelled).length+train.filter(t=>t.cancelled).length;
+    const intlB=flight.filter(f=>f.type==='Intl').length+hotel.filter(x=>x.intl).length;
+    const intlPct=Math.round(intlB/(bookings||1)*100);
+    const months=this.months();
+    const fByM=months.map(m=>this.sum(flight.filter(f=>f.created&&f.created.slice(0,7)===m),x=>x.net));
+    const hByM=months.map(m=>this.sum(hotel.filter(f=>f.created&&f.created.slice(0,7)===m),x=>x.net));
+    // wallet balance (latest within range)
+    const wallet=this.raw().wallet.filter(w=>this.inMonths({created:w.date}));
+    const lastBal=this.raw().wallet.length?this.raw().wallet[this.raw().wallet.length-1].balance:0;
+    // top travelers by total spend
+    const topT=this.travellerRows(flight,hotel,train).sort((a,b)=>b.total-a.total).slice(0,8)
+      .map(t=>({label:t.name,value:t.total,valLabel:this.cr(t.total),color:C.flight}));
+    // top cities (hotel spend + flight destination spend)
+    const cmap={};
+    hotel.forEach(x=>{ if(!x.city)return; cmap[x.city]=(cmap[x.city]||0)+x.net; });
+    flight.forEach(f=>{ if(!f.to)return; cmap[f.to]=(cmap[f.to]||0)+f.net; });
+    const topC=Object.entries(cmap).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({label:k,value:v,valLabel:this.cr(v),color:C.hotel}));
+
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(185px,1fr))',gap:14}},
+        this.kpi('Total Travel Spend', this.cr(total), bookings+' bookings · '+(months.length?this.ml(months[0])+'–'+this.ml(months[months.length-1]):''), C.flight),
+        this.kpi('Flight Spend', this.cr(fSpend), flight.length+' tickets · '+Math.round(fSpend/total*100||0)+'%', C.flight),
+        this.kpi('Hotel Spend', this.cr(hSpend), hotel.length+' stays · '+Math.round(hSpend/total*100||0)+'%', C.hotel),
+        this.kpi('Rail Spend', this.cr(tSpend), train.length+' train bookings', C.cat[6]),
+        this.kpi('Unique Travelers', travelers, 'avg '+this.cr(total/(travelers||1))+' each', C.cat[4]),
+        this.kpi('Wallet Balance', this.cr(lastBal), 'current MyBiz wallet balance', C.cat[5]),
+        this.kpi('International Travel', intlPct+'%', intlB+' bookings abroad', C.hotel),
+        this.kpi('Cancellations', cancels, 'across flight + hotel + rail', C.cat[3])
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.55fr 1fr'),gap:18}},
+        this.card('Monthly Travel Spend','Flights vs hotels, booked per month', this.columns(months,fByM,hByM)),
+        this.card('Spend Split','Where the travel budget goes', this.donut([
+          {label:'Flights',value:fSpend,color:C.flight,disp:this.cr(fSpend)},
+          {label:'Hotels',value:hSpend,color:C.hotel,disp:this.cr(hSpend)},
+          {label:'Rail',value:tSpend,color:C.cat[6],disp:this.cr(tSpend)}
+        ], this.cr(total), 'total'))
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1fr 1fr'),gap:18}},
+        this.card('Top Travelers','By total spend (flight + hotel + rail)', this.hbars(topT,{labelW:150})),
+        this.card('Top Destinations','By combined spend', this.hbars(topC,{labelW:120}))
+      )
+    );
+  }
+
+  view_flights(){
+    const h=React.createElement; const {flight}=this.filtered();
+    const spend=this.sum(flight,f=>f.net), avgFare=spend/(flight.length||1);
+    const lead=this.avg(flight,f=>f.lead);
+    const intl=flight.filter(f=>f.type==='Intl').length;
+    const rt=flight.filter(f=>/round/i.test(f.journey)).length;
+    // airlines
+    const air=this.groupSum(flight,f=>f.airline).sort((a,b)=>b.spend-a.spend).slice(0,10)
+      .map((g,i)=>({label:g.key,value:g.spend,valLabel:this.cr(g.spend),sub:g.count+'×',color:C.cat[i%C.cat.length]}));
+    // class
+    const cls=this.groupSum(flight,f=>f.cls||'Economy').sort((a,b)=>b.count-a.count)
+      .map((g,i)=>({label:g.key,value:g.count,color:i===0?C.flight:C.cat[2],disp:g.count}));
+    // journey
+    const jn=this.groupSum(flight,f=>f.journey).sort((a,b)=>b.count-a.count)
+      .map((g,i)=>({label:g.key,value:g.count,color:C.cat[i%C.cat.length],disp:g.count}));
+    // routes
+    const rmap={};
+    flight.forEach(f=>{ if(!f.from||!f.to)return; const k=f.from+' → '+f.to; if(!rmap[k])rmap[k]={k,trips:0,spend:0}; rmap[k].trips++; rmap[k].spend+=f.net; });
+    const routes=Object.values(rmap).sort((a,b)=>b.spend-a.spend).slice(0,12);
+    const fStatus=['Booked','Date Changed','Cancelled'].map((s,i)=>({label:s,value:flight.filter(f=>f.status===s).length,color:[C.flight,C.accent,C.cat[3]][i],disp:flight.filter(f=>f.status===s).length})).filter(s=>s.value);
+    const cancl=flight.filter(f=>f.cancelled).length;
+    const months=this.months();
+    const fByM=months.map(m=>this.sum(flight.filter(f=>f.created&&f.created.slice(0,7)===m),x=>x.net));
+
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14}},
+        this.kpi('Flight Bookings', flight.length, intl+' international · '+(flight.length-intl)+' domestic', C.flight),
+        this.kpi('Flight Spend', this.cr(spend), 'across '+this.groupSum(flight,f=>f.airline).length+' airlines', C.flight),
+        this.kpi('Avg Ticket Value', this.inr(avgFare), 'net charged per booking', C.cat[4]),
+        this.kpi('Avg Booking Lead', lead.toFixed(0)+' days', 'before departure', C.accent),
+        this.kpi('Round Trip Share', Math.round(rt/(flight.length||1)*100)+'%', rt+' round trips booked', C.cat[5]),
+        this.kpi('Cancelled', cancl, this.cr(flight.filter(f=>f.cancelled).reduce((a,b)=>a+b.net,0))+' expense retained', C.cat[3])
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.3fr 1fr'),gap:18}},
+        this.card('Airline-wise Spend','Top carriers by net spend', this.hbars(air,{labelW:140})),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+          this.card('Cabin Class','Bookings by class', this.donut(cls, flight.length, 'flights')),
+          this.card('Booking Actions','From booking_action column', this.donut(fStatus, flight.length, 'flights'))
+        )
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.3fr 1fr'),gap:18}},
+        this.card('Journey Type','One-way vs round trip', this.donut(jn, jn.reduce((a,b)=>a+b.value,0), 'trips')),
+        this.card('Monthly Flight Spend',null, this.columns(months,fByM,months.map(()=>0)))
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr',gap:18}},
+        this.card('Top Routes','Highest-spend city pairs', this.table([
+          {label:'Route',key:'k',bold:true},
+          {label:'Trips',key:'trips',num:true},
+          {label:'Avg Fare',num:true,render:r=>this.inr(r.spend/r.trips)},
+          {label:'Spend',num:true,bold:true,render:r=>this.cr(r.spend)}
+        ], routes))
+      )
+    );
+  }
+
+  view_hotels(){
+    const h=React.createElement; const {hotel}=this.filtered();
+    const spend=this.sum(hotel,x=>x.net); const nights=this.sum(hotel,x=>x.nights*x.rooms);
+    const alos=this.avg(hotel,x=>x.nights); const perNight=spend/(nights||1);
+    const avgStar=this.avg(hotel.filter(x=>x.star>0),x=>x.star);
+    // cities
+    const city=this.groupSum(hotel,x=>x.city).sort((a,b)=>b.spend-a.spend).slice(0,10)
+      .map((g,i)=>({label:g.key,value:g.spend,valLabel:this.cr(g.spend),sub:g.count+'×',color:C.cat[i%C.cat.length]}));
+    // star
+    const starG=[5,4,3,2,1,0].map(s=>({s,items:hotel.filter(x=>x.star===s)})).filter(g=>g.items.length)
+      .map(g=>({label:(g.s||'Un').toString()+(g.s?'★':'rated'),value:g.items.length,valLabel:g.items.length+' stays',color:g.s>=4?C.hotel:g.s>=3?C.accent:C.cat[3]}));
+    // meal
+    const meal=this.groupSum(hotel,x=>x.mealCat).sort((a,b)=>b.count-a.count)
+      .map((g,i)=>({label:g.key,value:g.count,color:C.cat[i%C.cat.length],disp:g.count}));
+    // top hotels
+    const hmap={};
+    hotel.forEach(x=>{ if(!x.hotel)return; const k=x.hotel; if(!hmap[k])hmap[k]={k,city:x.city,nights:0,spend:0,n:0}; hmap[k].nights+=x.nights*x.rooms; hmap[k].spend+=x.net; hmap[k].n++; });
+    const hotels=Object.values(hmap).sort((a,b)=>b.spend-a.spend).slice(0,12);
+    const months=this.months();
+    const hByM=months.map(m=>this.sum(hotel.filter(f=>f.created&&f.created.slice(0,7)===m),x=>x.net));
+    const hStatus=['Booked','Cancelled'].map((s,i)=>({label:s,value:hotel.filter(x=>x.status===s).length,color:[C.hotel,C.cat[3]][i],disp:hotel.filter(x=>x.status===s).length})).filter(s=>s.value);
+    const hcancl=hotel.filter(x=>x.cancelled).length;
+
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14}},
+        this.kpi('Hotel Bookings', hotel.length, this.groupSum(hotel,x=>x.city).length+' cities', C.hotel),
+        this.kpi('Hotel Spend', this.cr(spend), 'net charged', C.hotel),
+        this.kpi('Room Nights', nights, 'rooms × nights booked', C.cat[5]),
+        this.kpi('Avg Length of Stay', alos.toFixed(1)+' nights', 'per booking', C.cat[4]),
+        this.kpi('Avg Rate / Night', this.inr(perNight), 'blended across stays', C.accent),
+        this.kpi('Avg Star Rating', avgStar.toFixed(1)+'★', 'where rated', C.accent),
+        this.kpi('Cancelled', hcancl, this.cr(hotel.filter(x=>x.cancelled).reduce((a,b)=>a+b.net,0))+' expense retained', C.cat[3])
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.3fr 1fr'),gap:18}},
+        this.card('City-wise Hotel Spend','Top cities by net spend', this.hbars(city,{labelW:130})),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+          this.card('Star Rating Mix',null, this.hbars(starG,{labelW:70,valW:70,gap:9})),
+          this.card('Meal Plan',null, this.donut(meal, hotel.length, 'stays'))
+        )
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.3fr 1fr'),gap:18}},
+        this.card('Top Hotels','Highest-spend properties', this.table([
+          {label:'Hotel',key:'k',bold:true},
+          {label:'City',key:'city',fade:true},
+          {label:'Nights',key:'nights',num:true},
+          {label:'Spend',num:true,bold:true,render:r=>this.cr(r.spend)}
+        ], hotels)),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+          this.card('Booking Status','From booking_mode column', this.donut(hStatus, hotel.length, 'stays')),
+          this.card('Monthly Hotel Spend',null, this.columns(months,months.map(()=>0),hByM))
+        )
+      )
+    );
+  }
+
+  view_travelers(){
+    const h=React.createElement; const {flight,hotel,train}=this.filtered();
+    let rows=this.travellerRows(flight,hotel,train);
+    const key=this.state.tSort;
+    rows.sort((a,b)=>b[key]-a[key]);
+    const top=rows.slice(0,10).map((t,i)=>({label:t.name,value:t.total,valLabel:this.cr(t.total),color:C.cat[i%C.cat.length]}));
+    const onSort=k=>this.setState({tSort:k});
+    const totSpend=this.sum(rows,r=>r.total);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:14}},
+        this.kpi('Travelers', rows.length, 'with at least one booking', C.cat[4]),
+        this.kpi('Top Spender', rows[0]?this.cr(rows.slice().sort((a,b)=>b.total-a.total)[0].total):'—', rows[0]?rows.slice().sort((a,b)=>b.total-a.total)[0].name:'', C.flight),
+        this.kpi('Avg Spend / Traveler', this.cr(totSpend/(rows.length||1)), 'flight + hotel', C.hotel),
+        this.kpi('Most Frequent Flyer', (rows.slice().sort((a,b)=>b.flights-a.flights)[0]||{}).flights+' flights', (rows.slice().sort((a,b)=>b.flights-a.flights)[0]||{}).name||'', C.accent)
+      ),
+      this.card('Top Travelers by Spend',null, this.hbars(top,{labelW:170})),
+      this.card('Passenger-wise Breakdown','Click a column header to sort · '+rows.length+' travelers · shared bookings split equally among co-travellers', this.table([
+        {label:'Traveler',key:'name',bold:true},
+        {label:'Shared',sort:'shared',num:true,fade:true,render:r=>r.shared||'–'},
+        {label:'Flights',sort:'flights',num:true,render:r=>r.flights||'–'},
+        {label:'Intl',num:true,fade:true,render:r=>r.intl||'–'},
+        {label:'Hotel Nights',sort:'nights',num:true,render:r=>r.nights||'–'},
+        {label:'Trains',sort:'trains',num:true,render:r=>r.trains||'–'},
+        {label:'Flight Spend',sort:'fSpend',num:true,render:r=>this.cr(r.fSpend)},
+        {label:'Hotel Spend',sort:'hSpend',num:true,render:r=>this.cr(r.hSpend)},
+        {label:'Total',sort:'total',num:true,bold:true,render:r=>this.cr(r.total)}
+      ], rows, key, onSort))
+    );
+  }
+
+  view_cities(){
+    const h=React.createElement; const {flight,hotel}=this.filtered();
+    const m={};
+    const get=k=>{ if(!m[k])m[k]={city:k,stays:0,nights:0,hSpend:0,flights:0,fSpend:0}; return m[k]; };
+    hotel.forEach(x=>{ if(!x.city)return; const c=get(x.city); c.stays++; c.nights+=x.nights*x.rooms; c.hSpend+=x.net; });
+    flight.forEach(f=>{ if(!f.to)return; const c=get(f.to); c.flights++; c.fSpend+=f.net; });
+    let rows=Object.values(m).map(c=>(c.total=c.hSpend+c.fSpend,c));
+    const key=this.state.cSort; rows.sort((a,b)=>b[key]-a[key]);
+    const onSort=k=>this.setState({cSort:k});
+    const top=rows.slice(0,10).map((c,i)=>({label:c.city,value:c.total,valLabel:this.cr(c.total),color:C.cat[i%C.cat.length]}));
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:14}},
+        this.kpi('Cities Covered', rows.length, 'across flights & hotels', C.cat[5]),
+        this.kpi('Top City', rows[0]?rows[0].city:'—', rows[0]?this.cr(rows[0].total)+' total':'', C.flight),
+        this.kpi('Hotel Nights', this.sum(rows,r=>r.nights), 'total room nights', C.hotel),
+        this.kpi('Inbound Flights', this.sum(rows,r=>r.flights), 'arrivals booked', C.accent)
+      ),
+      this.card('Top Cities by Spend',null, this.hbars(top,{labelW:120})),
+      this.card('City-wise Breakdown','Click a column header to sort · '+rows.length+' cities', this.table([
+        {label:'City',key:'city',bold:true},
+        {label:'Flights In',sort:'flights',num:true,render:r=>r.flights||'–'},
+        {label:'Flight Spend',sort:'fSpend',num:true,render:r=>this.cr(r.fSpend)},
+        {label:'Hotel Stays',sort:'stays',num:true,render:r=>r.stays||'–'},
+        {label:'Nights',sort:'nights',num:true,render:r=>r.nights||'–'},
+        {label:'Hotel Spend',sort:'hSpend',num:true,render:r=>this.cr(r.hSpend)},
+        {label:'Total',sort:'total',num:true,bold:true,render:r=>this.cr(r.total)}
+      ], rows, key, onSort))
+    );
+  }
+
+  view_cancellations(){
+    const h=React.createElement; const {flight,hotel,train}=this.filtered();
+    const cf=flight.filter(f=>f.cancelled), ch=hotel.filter(x=>x.cancelled), ct=train.filter(x=>x.cancelled);
+    const expense=this.sum(cf,f=>f.net)+this.sum(ch,x=>x.net)+this.sum(ct,x=>x.net);
+    const refunded=-(this.sum(cf,f=>f.refund)+this.sum(ch,x=>x.refund)+this.sum(ct,x=>x.refund));
+    const booked=this.sum(cf,f=>f.gross)+this.sum(ch,x=>x.gross)+this.sum(ct,x=>x.gross);
+    const recRate=booked?Math.round(refunded/booked*100):0;
+    // unified detail rows
+    const det=this.cancelRows(cf,ch,ct);
+    const key=this.state.xSort; det.sort((a,b)=>(b[key]||0)-(a[key]||0));
+    const onSort=k=>this.setState({xSort:k});
+    // who: top cancellers by expense
+    const wmap={}; det.forEach(d=>{ if(!d.who)return; wmap[d.who]=(wmap[d.who]||0)+d.expense; });
+    const topWho=Object.entries(wmap).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v],i)=>({label:k,value:Math.max(0,v),valLabel:this.cr(v),color:C.cat[i%C.cat.length]}));
+    // FLIGHT booking_action breakdown (status)
+    const fStatus=['Booked','Date Changed','Cancelled'].map((s,i)=>({label:s,value:flight.filter(f=>f.status===s).length,color:[C.flight,C.accent,C.cat[3]][i]})).filter(s=>s.value);
+    // HOTEL booking status + channel
+    const hStatus=['Booked','Cancelled'].map((s,i)=>({label:s,value:hotel.filter(x=>x.status===s).length,color:[C.hotel,C.cat[3]][i]})).filter(s=>s.value);
+
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14}},
+        this.kpi('Cancelled Bookings', cf.length+ch.length, cf.length+' flights · '+ch.length+' hotels', C.cat[3]),
+        this.kpi('Cancellation Expense', this.cr(expense), 'net retained after refunds', C.cat[3]),
+        this.kpi('Amount Refunded', this.cr(refunded), recRate+'% of cancelled value recovered', C.hotel),
+        this.kpi('Booked Value Cancelled', this.cr(booked), 'original value of cancelled trips', C.accent)
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1fr 1fr'),gap:18}},
+        this.card('Flight Booking Actions','From booking_action — booked vs changed vs cancelled', this.donut(fStatus, flight.length, 'flights')),
+        this.card('Hotel Booking Status','From booking_mode — booked vs cancelled', this.donut(hStatus, hotel.length, 'hotels'))
+      ),
+      this.card('Cancellation Expense by Traveler','Net retained (non-refunded) on cancelled bookings', this.hbars(topWho,{labelW:170})),
+      this.card('Cancellation & Change Detail','Who cancelled what · click a header to sort · shared bookings split per traveller', this.table([
+        {label:'Traveler',bold:true,render:r=>r.n>1?h('span',null,r.who,h('span',{style:{color:C.faint,fontWeight:400}},' · 1/'+r.n+' share')):r.who},
+        {label:'Type',num:false,render:r=>{const cm={Flight:[C.flight,'#EEF0FE'],Hotel:[C.hotel,'#E7F5F2'],Rail:[C.cat[6],'#E6F6EE']}[r.type]||[C.muted,'#EEF1F5'];return h('span',{style:{fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:20,background:cm[1],color:cm[0]}},r.type);}},
+        {label:'Airline / Hotel',render:r=>r.detail||'–'},
+        {label:'Route / City',fade:true,render:r=>r.sub||'–'},
+        {label:'Date',fade:true,render:r=>r.date?this.ml(r.date.slice(0,7))+' '+r.date.slice(8):'–'},
+        {label:'Booked',sort:'booked',num:true,render:r=>this.cr(r.booked)},
+        {label:'Refunded',sort:'refund',num:true,fade:true,render:r=>this.cr(r.refund)},
+        {label:'Net Expense',sort:'expense',num:true,bold:true,render:r=>this.cr(r.expense)}
+      ], det, key, onSort))
+    );
+  }
+
+  view_actions(){
+    const h=React.createElement; const {scope}=this.state; const raw=this.raw();
+    let fAct=raw.actions.flight.filter(x=>this.inMonths(x)), hAct=raw.actions.hotel.filter(x=>this.inMonths(x)), tAct=raw.actions.train.filter(x=>this.inMonths(x));
+    if(scope==='dom'){ fAct=fAct.filter(a=>a.type==='Dom'); hAct=hAct.filter(a=>a.country==='India'); }
+    if(scope==='intl'){ fAct=fAct.filter(a=>a.type==='Intl'); hAct=hAct.filter(a=>a.country&&a.country!=='India'); }
+    if(this.q()){ fAct=fAct.filter(a=>this.matchQ(a,[a.traveller,a.airline,a.bookingId,a.pnr,a.from,a.to])); hAct=hAct.filter(a=>this.matchQ(a,[a.traveller,a.hotel,a.bookingId,a.pnr,a.city])); tAct=tAct.filter(a=>this.matchQ(a,[a.traveller,a.trainName,a.bookingId,a.pnr])); }
+    const {flight,hotel,train}=this.filtered();
+    const cf=flight.filter(f=>f.cancelled), ch=hotel.filter(x=>x.cancelled), ct=train.filter(x=>x.cancelled);
+    const agg=rows=>{ const m={}; for(const r of rows){ if(!m[r.action])m[r.action]={count:0,net:0}; m[r.action].count++; m[r.action].net+=r.net; } return m; };
+    const fA=agg(fAct), hA=agg(hAct), tA=agg(tAct);
+    // economics of cancellation
+    const fGross=this.sum(cf,f=>f.gross), fRef=-this.sum(cf,f=>f.refund), fLost=this.sum(cf,f=>f.net);
+    const hGross=this.sum(ch,x=>x.gross), hRef=-this.sum(ch,x=>x.refund), hLost=this.sum(ch,x=>x.net);
+    const totLost=fLost+hLost, totRef=fRef+hRef, totGross=fGross+hGross;
+    // add-on breakdown (charges actually paid)
+    const addonSeats=this.sum(flight,f=>f.addonSeats), addonMeals=this.sum(flight,f=>f.addonMeals), addonBag=this.sum(flight,f=>f.addonBag), addonIns=this.sum(flight,f=>f.addonIns);
+    const addon=addonSeats+addonMeals+addonBag+addonIns;
+    // date-change penalty (from penalty on date-change action rows)
+    const dchg=this.sum(fAct.filter(a=>a.action==='DATE_CHANGE'),a=>a.penalty);
+    const cancPenalty=this.sum(fAct.filter(a=>a.action==='CANCELLATION'),a=>a.penalty)+this.sum(hAct.filter(a=>a.action==='CANCELLATION'),a=>a.penalty);
+    const refClaim=-((fA.REFUND_CLAIM?fA.REFUND_CLAIM.net:0)+(hA.REFUND_CLAIM?hA.REFUND_CLAIM.net:0));
+    const recRate=totGross?Math.round((totGross-totLost)/totGross*100):0;
+    const hRecRate=hGross?(hGross-hLost)/hGross:0;
+    const potSave=Math.max(0, Math.round(hRecRate*fGross - fRef));
+
+    const actMeta={BOOKING:['Booking',C.flight],CANCELLATION:['Cancellation',C.cat[3]],DATE_CHANGE:['Date Change',C.accent],ADDON_SEATS:['Add-on Seats',C.cat[4]],REFUND_CLAIM:['Refund Claim',C.hotel],OFFLINE_MODIFICATION:['Offline Modification',C.cat[5]]};
+    const order=['BOOKING','CANCELLATION','DATE_CHANGE','ADDON_SEATS','REFUND_CLAIM','OFFLINE_MODIFICATION'];
+    const actList=A=>h('div',{style:{display:'flex',flexDirection:'column'}},
+      order.filter(k=>A[k]).map((k,i,arr)=>{ const [lbl,col]=actMeta[k]; const v=A[k];
+        return h('div',{key:k,style:{display:'flex',alignItems:'center',gap:12,padding:'11px 2px',borderBottom:i<arr.length-1?'1px solid '+C.border:'none'}},
+          h('span',{style:{width:9,height:9,borderRadius:3,background:col,flex:'none'}}),
+          h('span',{style:{flex:1,fontSize:13,fontWeight:500}},lbl),
+          h('span',{style:{fontSize:11.5,color:C.muted,fontFamily:C.mono,width:60,textAlign:'right'}},v.count+'\u00d7'),
+          h('span',{style:{fontFamily:C.mono,fontSize:13,fontWeight:600,width:108,textAlign:'right',color:v.net<0?C.cat[3]:C.ink}},this.cr(v.net))
+        );
+      })
+    );
+    const recBar=(label,gross,lost)=>{ const rp=gross?Math.round((gross-lost)/gross*100):0;
+      return h('div',{style:{marginBottom:18}},
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}},
+          h('div',null, h('span',{style:{fontSize:13,fontWeight:600}},label),
+            h('span',{style:{fontSize:11.5,color:C.muted,marginLeft:8}},'booked '+this.cr(gross))),
+          h('span',{style:{fontSize:12.5,fontFamily:C.mono,fontWeight:600,color:C.cat[3]}},this.cr(lost)+' lost')
+        ),
+        h('div',{style:{display:'flex',height:26,borderRadius:7,overflow:'hidden',background:C.track}},
+          h('div',{style:{width:rp+'%',background:C.hotel,display:'flex',alignItems:'center',paddingLeft:9,color:'#fff',fontSize:11,fontWeight:600,fontFamily:C.mono,minWidth:0,whiteSpace:'nowrap'}}, rp>=14?rp+'% refunded':''),
+          h('div',{style:{flex:1,background:C.cat[3],display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:9,color:'#fff',fontSize:11,fontWeight:600,fontFamily:C.mono,whiteSpace:'nowrap'}}, (100-rp)>=10?(100-rp)+'% retained':'')
+        )
+      );
+    };
+    // cancellation by airline
+    const am={}; cf.forEach(f=>{ const a=am[f.airline]=am[f.airline]||{airline:f.airline,n:0,gross:0,lost:0}; a.n++; a.gross+=f.gross; a.lost+=f.net; });
+    const airRows=Object.values(am).sort((x,y)=>y.lost-x.lost);
+    const intlLost=this.sum(cf.filter(f=>f.type==='Intl'),f=>f.net);
+    const worst=airRows.filter(r=>r.gross>30000).sort((a,b)=>(b.lost/b.gross)-(a.lost/a.gross))[0];
+
+    const recs=[
+      {impact:'High',title:'Plug the flight-cancellation leak',
+       body:'Airlines retained '+this.cr(fLost)+' on '+cf.length+' cancelled tickets — '+Math.round(fLost/(fGross||1)*100)+'% of their booked value, against just '+Math.round(hLost/(hGross||1)*100)+'% on hotels. Route cancellation-prone and uncertain trips to refundable / flexi fares.',
+       metric:'~'+this.cr(potSave)+' recoverable if flights matched hotels\u2019 '+Math.round(hRecRate*100)+'% refund rate'},
+      {impact:'High',title:'Gate long-lead & international tickets',
+       body:'Cancelled flights are booked ~'+(cf.length?(this.sum(cf,f=>f.lead)/cf.length).toFixed(0):0)+' days out vs the '+(flight.length?(this.sum(flight,f=>f.lead)/flight.length).toFixed(0):0)+'-day average, and international cancellations alone cost '+this.cr(intlLost)+'. Add a confirm-before-book approval for trips booked >10 days ahead.',
+       metric:Math.round(intlLost/(totLost||1)*100)+'% of all cancellation loss is international'},
+      {impact:'Medium',title:'Steer away from low-recovery carriers',
+       body:(worst?worst.airline+' returned only '+Math.round((1-worst.lost/worst.gross)*100)+'% of cancelled value':'Some carriers refund little on cancellation')+'. Negotiate corporate refundable fares or prefer carriers with better cancellation terms on these sectors.',
+       metric:(worst?this.cr(worst.lost)+' lost on '+worst.airline:'')},
+      {impact:'Low',title:'Hotels are the model — extend it',
+       body:'Hotel bookings recover '+Math.round(hRecRate*100)+'% on cancellation (only '+this.cr(hLost)+' lost on '+ch.length+' stays) thanks to free-cancellation rates. Apply the same booking discipline across flights.',
+       metric:Math.round(hRecRate*100)+'% hotel refund recovery'},
+      {impact:'Low',title:'Trim discretionary add-ons',
+       body:'Date-change fees cost '+this.cr(dchg)+' and add-on seats '+this.cr(addon)+' over the period. Small today, but flag repeat date-changers and standardise seat policy before volume grows.',
+       metric:this.cr(dchg+addon)+' in changes & add-ons'}
+    ];
+    const impCol={High:C.cat[3],Medium:C.accent,Low:C.hotel};
+    const recCard=r=>h('div',{'data-card':'1',style:{background:'rgba(255,255,255,.8)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,.6)',borderRadius:14,padding:'18px 20px 16px',boxShadow:'0 1px 2px rgba(16,27,45,.05), 0 0 0 1px '+C.border,position:'relative',overflow:'hidden',display:'flex',flexDirection:'column'}},
+      h('span',{style:{position:'absolute',left:0,top:0,bottom:0,width:3,background:impCol[r.impact]}}),
+      h('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:10}},
+        h('span',{style:{fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'#fff',background:impCol[r.impact],padding:'3px 8px',borderRadius:6}},r.impact+' impact')),
+      h('div',{style:{fontSize:14.5,fontWeight:700,letterSpacing:'-.01em',marginBottom:7}},r.title),
+      h('div',{style:{fontSize:12.5,color:C.muted,lineHeight:1.55,flex:1}},r.body),
+      h('div',{style:{marginTop:13,paddingTop:11,borderTop:'1px solid '+C.border,fontSize:12,fontWeight:600,fontFamily:C.mono,color:impCol[r.impact]}},r.metric)
+    );
+
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14}},
+        this.kpi('Cancellation Charge', this.cr(totLost), 'retained after refunds · '+(cf.length+ch.length)+' cancellations', C.cat[3]),
+        this.kpi('Refund Recovery', recRate+'%', this.cr(totRef)+' returned of '+this.cr(totGross), C.hotel),
+        this.kpi('Date-Change Penalty', this.cr(dchg), (fA.DATE_CHANGE?fA.DATE_CHANGE.count:0)+' date changes', C.accent),
+        this.kpi('Add-on Charges', this.cr(addon), 'seats '+this.cr(addonSeats)+' · meals '+this.cr(addonMeals), C.cat[4]),
+        this.kpi('Refund Claims', this.cr(refClaim), ((fA.REFUND_CLAIM?fA.REFUND_CLAIM.count:0)+(hA.REFUND_CLAIM?hA.REFUND_CLAIM.count:0))+' claims raised', C.cat[5])
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx3(),gap:18}},
+        this.card('Flight Booking Actions','Count & net value per booking_action', actList(fA)),
+        this.card('Hotel Booking Actions','Count & net value per booking_action', actList(hA)),
+        this.card('Rail Booking Actions','Count & net value per booking_action', tAct.length?actList(tA):h('div',{style:{fontSize:12.5,color:C.muted,padding:'18px 2px'}},'No rail activity in this selection.'))
+      ),
+      this.card('Add-on Charges Breakdown','Optional extras purchased on flights',
+        this.hbars([
+          {label:'Seats',value:addonSeats,valLabel:this.cr(addonSeats),color:C.cat[4]},
+          {label:'Meals',value:addonMeals,valLabel:this.cr(addonMeals),color:C.accent},
+          {label:'Baggage',value:addonBag,valLabel:this.cr(addonBag),color:C.cat[5]},
+          {label:'Insurance',value:addonIns,valLabel:this.cr(addonIns),color:C.cat[6]}
+        ].filter(r=>r.value>0),{labelW:90})),
+      this.card('Cancellation Recovery','How much of cancelled booking value comes back as refund vs is retained as charge',
+        h('div',null, recBar('Flights',fGross,fLost), recBar('Hotels',hGross,hLost),
+          h('div',{style:{display:'flex',gap:18,fontSize:12,marginTop:4}},
+            [['Refunded',C.hotel],['Retained as charge',C.cat[3]]].map(([l,c],i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:7}},
+              h('span',{style:{width:10,height:10,borderRadius:3,background:c}}),l))))
+      ),
+      this.card('Cancellation Charge by Airline','Where flight cancellation cost concentrates · '+airRows.length+' carriers', this.table([
+        {label:'Airline',key:'airline',bold:true},
+        {label:'Cancelled',key:'n',num:true},
+        {label:'Booked Value',num:true,render:r=>this.cr(r.gross)},
+        {label:'Refunded',num:true,fade:true,render:r=>this.cr(r.gross-r.lost)},
+        {label:'Recovery',num:true,render:r=>h('span',{style:{color:(r.gross-r.lost)/r.gross>=0.6?C.hotel:C.cat[3],fontWeight:600}},Math.round((r.gross-r.lost)/r.gross*100)+'%')},
+        {label:'Charge Lost',num:true,bold:true,render:r=>this.cr(r.lost)}
+      ], airRows)),
+      this.card('How IDCUBE can cut flight & hotel cost','Prioritised actions from the booking_action analysis',
+        h('div',{style:{display:'grid',gridTemplateColumns:this.gx('repeat(auto-fit,minmax(290px,1fr))'),gap:14}}, recs.map((r,i)=>h('div',{key:i},recCard(r))))
+      )
+    );
+  }
+
+  view_train(){
+    const h=React.createElement; const {train}=this.filtered();
+    const spend=this.sum(train,t=>t.net);
+    const cancl=train.filter(t=>t.cancelled).length;
+    const cnf=train.filter(t=>/CNF/i.test(t.seatStatus)&&!/WL/i.test(t.seatStatus)).length;
+    const wl=train.filter(t=>/WL/i.test(t.seatStatus)).length;
+    // routes
+    const rmap={}; train.forEach(t=>{ if(!t.from||!t.to)return; const k=t.from+' → '+t.to; if(!rmap[k])rmap[k]={k,trips:0,spend:0}; rmap[k].trips++; rmap[k].spend+=t.net; });
+    const routes=Object.values(rmap).sort((a,b)=>b.spend-a.spend).slice(0,10);
+    // class mix
+    const cls=this.groupSum(train,t=>t.cls||'—').sort((a,b)=>b.count-a.count).map((g,i)=>({label:g.key,value:g.count,color:C.cat[i%C.cat.length],disp:g.count}));
+    // detail
+    const det=train.slice().sort((a,b)=>(b.created||'').localeCompare(a.created||''));
+    if(!train.length) return this.card('Rail Bookings',null,h('div',{style:{fontSize:13,color:C.muted,padding:'10px 2px'}},'No train bookings match the current filters.'));
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(185px,1fr))',gap:14}},
+        this.kpi('Train Bookings', train.length, this.groupSum(train,t=>t.from+'→'+t.to).length+' routes', C.cat[6]),
+        this.kpi('Rail Spend', this.cr(spend), 'net charged via IRCTC', C.cat[6]),
+        this.kpi('Avg Ticket', this.inr(spend/(train.length||1)), 'per booking', C.cat[4]),
+        this.kpi('Confirmed', cnf, wl?wl+' waitlisted':'all confirmed', C.hotel),
+        this.kpi('Cancelled', cancl, this.cr(this.sum(train.filter(t=>t.cancelled),t=>t.net))+' retained', C.cat[3])
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.4fr 1fr'),gap:18}},
+        this.card('Top Rail Routes','Highest-spend station pairs', this.table([
+          {label:'Route',key:'k',bold:true},
+          {label:'Trips',key:'trips',num:true},
+          {label:'Spend',num:true,bold:true,render:r=>this.cr(r.spend)}
+        ], routes)),
+        this.card('Travel Class','Bookings by class', this.donut(cls, train.length, 'trains'))
+      ),
+      this.card('Rail Booking Detail',train.length+' bookings', this.table([
+        {label:'Traveler',key:'traveller',bold:true},
+        {label:'Train',render:r=>r.trainName||'–'},
+        {label:'Route',fade:true,render:r=>(r.from&&r.to)?r.from+' → '+r.to:'–'},
+        {label:'Class',render:r=>r.cls||'–'},
+        {label:'Status',render:r=>r.seatStatus||'–'},
+        {label:'PNR',fade:true,render:r=>r.pnr||'–'},
+        {label:'Date',fade:true,render:r=>r.travel?this.ml(r.travel.slice(0,7))+' '+r.travel.slice(8):'–'},
+        {label:'Net',num:true,bold:true,render:r=>this.cr(r.net)}
+      ], det))
+    );
+  }
+
+  view_wallet(){
+    const h=React.createElement; const wallet=this.raw().wallet.filter(w=>this.inMonths({created:w.date}))
+      .filter(w=>this.matchQ(w,[w.txnId,w.reason,w.type]));
+    const credits=wallet.filter(w=>w.type==='CREDIT'), debits=wallet.filter(w=>w.type==='DEBIT');
+    const recharge=this.sum(wallet.filter(w=>w.reason==='Recharge'),w=>w.amount);
+    const refunds=this.sum(wallet.filter(w=>w.reason==='Cancellation Refund'),w=>w.amount);
+    const spent=this.sum(wallet.filter(w=>w.type==='DEBIT'),w=>w.amount);
+    const all=this.raw().wallet;
+    const lastBal=all.length?all[all.length-1].balance:0;
+    const unsettled=this.sum(wallet.filter(w=>w.settlement==='UNSETTLED'),w=>w.amount);
+    // monthly recharge vs spend
+    const months=this.months();
+    const rByM=months.map(m=>this.sum(wallet.filter(w=>w.date&&w.date.slice(0,7)===m&&w.type==='CREDIT'),w=>w.amount));
+    const sByM=months.map(m=>this.sum(wallet.filter(w=>w.date&&w.date.slice(0,7)===m&&w.type==='DEBIT'),w=>w.amount));
+    // reason split (debit usage)
+    const reasons=this.groupSumW(wallet,w=>w.reason);
+    // balance trend (sample last ~ within range, sorted)
+    const sorted=wallet.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const recent=wallet.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,25);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(185px,1fr))',gap:14}},
+        this.kpi('Current Balance', this.cr(lastBal), 'MyBiz wallet, latest', C.cat[5]),
+        this.kpi('Total Recharged', this.cr(recharge), wallet.filter(w=>w.reason==='Recharge').length+' top-ups', C.hotel),
+        this.kpi('Total Spent', this.cr(spent), debits.length+' debit transactions', C.flight),
+        this.kpi('Refunds Credited', this.cr(refunds), wallet.filter(w=>w.reason==='Cancellation Refund').length+' refunds', C.accent),
+        this.kpi('Transactions', wallet.length, credits.length+' credit · '+debits.length+' debit', C.cat[4]),
+        this.kpi('Unsettled', this.cr(unsettled), 'pending settlement', C.cat[3])
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:this.gx('1.55fr 1fr'),gap:18}},
+        this.card('Recharge vs Spend','Wallet credits (recharge/refund) vs debits per month',
+          this.columns(months,sByM,rByM,['Debited',C.flight],['Credited',C.hotel])),
+        this.card('Wallet Usage','By transaction reason', this.donut(
+          reasons.sort((a,b)=>b.spend-a.spend).map((g,i)=>({label:g.key,value:Math.abs(g.spend),color:C.cat[i%C.cat.length],disp:this.cr(g.spend)})),
+          wallet.length, 'txns'))
+      ),
+      this.card('Recent Transactions','Most recent '+Math.min(25,recent.length)+' of '+wallet.length+' in range', this.table([
+        {label:'Date',fade:true,render:r=>r.date?this.ml(r.date.slice(0,7))+' '+r.date.slice(8):'–'},
+        {label:'Type',render:r=>h('span',{style:{fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:20,background:r.type==='CREDIT'?'#E7F5F2':'#EEF0FE',color:r.type==='CREDIT'?C.hotel:C.flight}},r.type)},
+        {label:'Reason',render:r=>r.reason||'–'},
+        {label:'Booking / Txn ID',fade:true,render:r=>r.txnId||'–'},
+        {label:'Settlement',fade:true,render:r=>r.settlement||'–'},
+        {label:'Amount',num:true,bold:true,render:r=>h('span',{style:{color:r.type==='CREDIT'?C.hotel:C.ink}},(r.type==='CREDIT'?'+':'-')+this.cr(r.amount))},
+        {label:'Balance',num:true,fade:true,render:r=>this.cr(r.balance)}
+      ], recent))
+    );
+  }
+  groupSumW(arr, keyFn){ const m={}; for(const x of arr){ const k=keyFn(x); if(k==null||k==='')continue; if(!m[k])m[k]={key:k,count:0,spend:0}; m[k].count++; m[k].spend+=(x.amount||0); } return Object.values(m); }
+
+  view_search(){
+    const h=React.createElement; const {flight,hotel,train}=this.filtered();
+    const q=this.state.query.trim();
+    const n=flight.length+hotel.length+train.length;
+    const totSpend=this.sum(flight,f=>f.net)+this.sum(hotel,x=>x.net)+this.sum(train,t=>t.net);
+    const blocks=[];
+    if(flight.length) blocks.push(this.card('Flights · '+flight.length,null, this.table([
+      {label:'Traveler',bold:true,render:r=>r.travellers&&r.travellers.length>1?r.traveller+' +'+(r.travellers.length-1):r.traveller||'–'},
+      {label:'Airline',render:r=>r.airline||'–'},
+      {label:'Route',fade:true,render:r=>(r.from&&r.to)?r.from+' → '+r.to:'–'},
+      {label:'Booking ID',fade:true,render:r=>r.bookingId},
+      {label:'PNR',fade:true,render:r=>r.pnr||'–'},
+      {label:'Date',fade:true,render:r=>r.created?this.ml(r.created.slice(0,7))+' '+r.created.slice(8):'–'},
+      {label:'Status',render:r=>r.status},
+      {label:'Net',num:true,bold:true,render:r=>this.cr(r.net)}
+    ], flight.slice().sort((a,b)=>(b.created||'').localeCompare(a.created||'')))));
+    if(hotel.length) blocks.push(this.card('Hotels · '+hotel.length,null, this.table([
+      {label:'Guest',bold:true,render:r=>r.guests&&r.guests.length>1?r.guest+' +'+(r.guests.length-1):r.guest||'–'},
+      {label:'Hotel',render:r=>r.hotel||'–'},
+      {label:'City',fade:true,render:r=>r.city||'–'},
+      {label:'Booking ID',fade:true,render:r=>r.bookingId},
+      {label:'Date',fade:true,render:r=>r.created?this.ml(r.created.slice(0,7))+' '+r.created.slice(8):'–'},
+      {label:'Status',render:r=>r.status},
+      {label:'Net',num:true,bold:true,render:r=>this.cr(r.net)}
+    ], hotel.slice().sort((a,b)=>(b.created||'').localeCompare(a.created||'')))));
+    if(train.length) blocks.push(this.card('Trains · '+train.length,null, this.table([
+      {label:'Traveler',bold:true,render:r=>r.traveller||'–'},
+      {label:'Train',render:r=>r.trainName||'–'},
+      {label:'Route',fade:true,render:r=>(r.from&&r.to)?r.from+' → '+r.to:'–'},
+      {label:'Booking ID',fade:true,render:r=>r.bookingId},
+      {label:'PNR',fade:true,render:r=>r.pnr||'–'},
+      {label:'Net',num:true,bold:true,render:r=>this.cr(r.net)}
+    ], train)));
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:14}},
+        this.kpi('Matches', n, 'for "'+q+'"', C.flight),
+        this.kpi('Flights', flight.length, '', C.flight),
+        this.kpi('Hotels', hotel.length, '', C.hotel),
+        this.kpi('Trains', train.length, '', C.cat[6]),
+        this.kpi('Total Net Spend', this.cr(totSpend), 'across matches', C.cat[4])
+      ),
+      n? h(React.Fragment,null,blocks) : this.card(null,null,h('div',{style:{padding:'30px 2px',textAlign:'center',color:C.muted,fontSize:14}},'No bookings match "'+q+'". Try a traveller, airline, hotel, city, Booking ID or PNR.'))
+    );
+  }
+
+  icon(name){
+    const h=React.createElement; const p={width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round'};
+    const paths={
+      overview:['M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+      flights:['M10.5 13.5 3 11l1-2 7 1 4.5-5.5a1.8 1.8 0 0 1 2.6 2.4L13 12l1 7-2 1-2.5-6.5z'],
+      hotels:['M3 21V7l9-4 9 4v14M3 21h18M9 21v-5h6v5M7 11h.01M12 11h.01M17 11h.01'],
+      travelers:['M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+      cities:['M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],
+      cancellations:['M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01'],
+      actions:['M3 3v18h18','M7 14l4-4 3 3 5-6','M18 7h2v2'],
+      train:['M4 15.5V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v9.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 15.5zM4 11h16M8 18l-2 3M16 18l2 3M9 7h6','M8.5 14.5h.01M15.5 14.5h.01'],
+      wallet:['M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z','M3 9h18M16 13h2'],
+      search:['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35']
+    };
+    return h('svg',p,(paths[name]||[]).map((d,i)=>h('path',{key:i,d})));
+  }
+
+  renderApp(){
+    const h=React.createElement;
+    if(!this.state.ready) return h('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:C.muted,fontSize:14}},'Loading travel data…');
+    const nav=[['overview','Overview'],['flights','Flights'],['hotels','Hotels'],['train','Rail'],['wallet','Wallet'],['travelers','Travelers'],['cities','Cities'],['cancellations','Cancellations'],['actions','Booking Actions']];
+    const titles={overview:['Travel Overview','Company-wide flight, hotel & rail spend at a glance'],flights:['Flights','Airline, route, class & booking-action analysis'],hotels:['Hotels','City, property, rate & booking-action analysis'],train:['Rail','Train routes, class, status & spend (IRCTC)'],wallet:['Wallet','MyBiz wallet recharges, spend, refunds & balance'],travelers:['Travelers','Passenger-wise spend & trip activity'],cities:['Cities','Destination-level travel demand & spend'],cancellations:['Cancellations & Changes','Who cancelled which flight / hotel / train, and the expense retained'],actions:['Booking Actions & Savings','Cancellation charges, add-ons, date-change penalties — and where IDCUBE can cut cost'],search:['Search Results','All bookings matching your search']};
+    this.TITLES=titles;
+    const searching=!!this.q();
+    const view=this.state.view; const t=titles[view];
+    const months=this.months();
+    const content = (this.state.revealed && this['view_'+view]) ? this['view_'+view]() : null;
+    const raw=this.raw();
+
+    const selStyle={appearance:'none',background:C.card,border:'1px solid '+C.border,borderRadius:9,padding:'8px 30px 8px 12px',fontSize:12.5,fontFamily:'inherit',color:C.ink,fontWeight:500,cursor:'pointer',outline:'none'};
+    const seg=(val,label)=>h('button',{key:val,onClick:()=>this.setState({scope:val}),
+      style:{border:'none',background:this.state.scope===val?C.ink:'transparent',color:this.state.scope===val?'#fff':C.muted,padding:'7px 14px',fontSize:12.5,fontWeight:600,borderRadius:8,cursor:'pointer',fontFamily:'inherit',transition:'all .15s',whiteSpace:'nowrap'}},label);
+    const mob=this.mob();
+    const PAD=mob?'16px 16px 36px':'22px 30px 40px';
+
+    const ms=this.monthSel();
+    // group months by year for the popover
+    const byYear={}; months.forEach(m=>{ const y=this.fyOf(m); (byYear[y]=byYear[y]||[]).push(m); });
+    const monthPop = this.state.monthOpen ? h('div',null,
+      h('div',{onClick:()=>this.setState({monthOpen:false}),style:{position:'fixed',inset:0,zIndex:40}}),
+      h('div',{style:{position:'absolute',top:'calc(100% + 6px)',right:0,zIndex:41,background:C.card,border:'1px solid '+C.border,borderRadius:12,boxShadow:'0 12px 32px rgba(16,27,45,.16)',padding:'12px',width:Math.min(300,(this.vwLive()||360)-32),maxHeight:380,overflowY:'auto'}},
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}},
+          h('button',{onClick:()=>this.setState({months:[]}),style:{border:'none',background:ms.length===0?C.flight:C.track,color:ms.length===0?'#fff':C.muted,borderRadius:7,padding:'5px 11px',fontSize:11.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}},'All months'),
+          ms.length?h('button',{onClick:()=>this.setState({months:[]}),style:{border:'none',background:'transparent',color:C.flight,fontSize:11.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}},'Clear ('+ms.length+')'):null
+        ),
+        Object.keys(byYear).sort().map(y=>{ const fyAll=byYear[y].every(m=>ms.includes(m)); return h('div',{key:y,style:{marginBottom:10}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'4px 2px 6px'}},
+            h('div',{style:{fontSize:10.5,fontWeight:700,color:C.faint,textTransform:'uppercase',letterSpacing:'.06em'}},this.fyLabel(y)+' · Apr–Mar'),
+            h('button',{onClick:()=>this.setState({months:fyAll?ms.filter(m=>!byYear[y].includes(m)):[...new Set([...ms,...byYear[y]])]}),style:{border:'1px solid '+(fyAll?C.flight:C.border),background:fyAll?C.flight:'#fff',color:fyAll?'#fff':C.flight,borderRadius:7,padding:'3px 9px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}},fyAll?'Selected':'Select FY')),
+          h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}},
+            byYear[y].map(m=>{ const on=ms.includes(m); return h('button',{key:m,onClick:()=>this.toggleMonth(m),
+              style:{border:'1px solid '+(on?C.flight:C.border),background:on?C.flight:'#fff',color:on?'#fff':C.ink,borderRadius:8,padding:'7px 4px',fontSize:12,fontWeight:on?600:500,cursor:'pointer',fontFamily:'inherit'}}, MON[+m.slice(5,7)-1]+" '"+m.slice(2,4)); })
+          )
+        ); })
+      )
+    ) : null;
+
+    const searchBox = h('div',{style:{position:'relative',display:'flex',alignItems:'center'}},
+      h('span',{style:{position:'absolute',left:11,color:C.faint,display:'flex',pointerEvents:'none'}},
+        h('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},h('circle',{cx:11,cy:11,r:7}),h('path',{d:'M21 21l-4.35-4.35'}))),
+      h('input',{value:this.state.query,onChange:e=>this.setState({query:e.target.value}),placeholder:({overview:'Search all bookings — name, airline, hotel, ID…',flights:'Search flights — traveller, airline, route, PNR…',hotels:'Search hotels — guest, hotel, city, ID…',train:'Search rail — traveller, train, PNR…',wallet:'Search wallet — Booking / Txn ID, reason…',travelers:'Search travellers by name…',cities:'Search cities…',cancellations:'Search cancellations — name, airline, hotel…',actions:'Search booking actions — name, airline, ID…'}[view]||'Search…'),
+        style:{appearance:'none',background:C.card,border:'1px solid '+(searching?C.flight:C.border),borderRadius:9,padding:'8px 30px 8px 33px',fontSize:12.5,fontFamily:'inherit',color:C.ink,outline:'none',width:mob?'100%':300}}),
+      this.state.query?h('button',{onClick:()=>this.setState({query:''}),style:{position:'absolute',right:8,border:'none',background:'transparent',color:C.muted,cursor:'pointer',fontSize:15,lineHeight:1,padding:2}},'×'):null
+    );
+
+    const monthBtn = h('div',{style:{position:'relative'}},
+      h('button',{onClick:()=>this.setState({monthOpen:!this.state.monthOpen}),
+        style:{display:'flex',alignItems:'center',gap:8,background:C.card,border:'1px solid '+(ms.length?C.flight:C.border),borderRadius:9,padding:'8px 12px',fontSize:12.5,fontFamily:'inherit',color:ms.length?C.flight:C.ink,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}},
+        h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.9,strokeLinecap:'round'},h('rect',{x:3,y:4,width:18,height:18,rx:2}),h('path',{d:'M3 10h18M8 2v4M16 2v4'})),
+        this.monthLabel(),
+        h('span',{style:{color:C.muted,fontSize:9}},'▼')),
+      monthPop
+    );
+
+    const exBtn=(kind,label,col)=>{ const busy=this.state.exporting===kind; return h('button',{key:kind,onClick:()=>this.doExport(kind),disabled:!!this.state.exporting,title:'Download '+t[0]+' as '+label,
+      onMouseEnter:e=>{e.currentTarget.style.borderColor=col;e.currentTarget.style.color=col;},onMouseLeave:e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.ink;},
+      style:{display:'flex',alignItems:'center',gap:6,background:C.card,border:'1px solid '+C.border,borderRadius:9,padding:'8px 11px',fontSize:12.5,fontFamily:'inherit',color:C.ink,fontWeight:600,cursor:this.state.exporting?'wait':'pointer',whiteSpace:'nowrap',opacity:this.state.exporting&&!busy?.55:1,transition:'border-color .15s, color .15s'}},
+      h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:col,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M12 3v12M7 10l5 5 5-5M5 21h14'})),
+      busy?'Preparing…':label); };
+    const exportBtns = h('div',{style:{display:'flex',gap:6}}, exBtn('xlsx','Excel','#10B981'), exBtn('pdf','PDF','#F43F5E'));
+    const filters = h('div',{style:{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}},
+      searchBox,
+      h('div',{style:{display:'flex',background:C.track,borderRadius:10,padding:3}}, seg('all','All'), seg('dom','Domestic'), seg('intl','International')),
+      monthBtn,
+      exportBtns
+    );
+
+    // ===================== MOBILE =====================
+    if(mob){
+      return h('div',{ref:this.setRoot,style:{display:'flex',flexDirection:'column',minHeight:'100vh'}},
+        h('header',{style:{background:C.side,color:'#fff',position:'sticky',top:0,zIndex:10,boxShadow:this.state.scrolled?'0 6px 22px rgba(16,27,45,.25)':'none',transition:'box-shadow .3s ease'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px 12px'}},
+            h('div',{style:{width:30,height:30,borderRadius:8,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',flex:'none',padding:3,boxSizing:'border-box'}}, h('img',{src:(window.__resources&&window.__resources.idcubeMark)||'idcube-mark.png',alt:'IDCUBE',style:{width:'100%',height:'100%',objectFit:'contain',display:'block'}})),
+            h('div',{style:{flex:1}},
+              h('div',{style:{fontSize:14,fontWeight:700,letterSpacing:'-.01em'}},'IDCUBE Travel Spent Analyser'),
+              h('div',{style:{fontSize:10.5,color:'#8C9AAE'}}, (raw.flight.length+raw.hotel.length+raw.train.length)+' bookings · '+raw.flight.length+' flights · '+raw.hotel.length+' hotels · '+raw.train.length+' rail')
+            )
+          ),
+          h('nav',{style:{display:'flex',gap:4,padding:'0 10px 10px',overflowX:'auto'}},
+            nav.map(([id,label])=>{ const on=this.state.view===id; return h('button',{key:id,onClick:()=>this.setState({view:id,query:''}),
+              style:{display:'flex',alignItems:'center',gap:7,padding:'9px 14px',border:'none',borderRadius:9,cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:on?600:500,whiteSpace:'nowrap',flex:'none',transition:'all .2s ease',
+                background:on?'linear-gradient(90deg,rgba(79,70,229,.32),rgba(22,35,58,.55))':'rgba(255,255,255,.06)',color:on?'#fff':'#9AA8BC',boxShadow:on?'0 0 0 1px rgba(99,102,241,.45), 0 4px 14px rgba(79,70,229,.3)':'none'}},
+              this.icon(id), label); })
+          )
+        ),
+        h('main',{style:{flex:1,minWidth:0}},
+          h('div',{style:{padding:'16px 16px 12px',borderBottom:'1px solid '+C.border,background:'#fff'}},
+            h('h1',{style:{margin:0,fontSize:19,fontWeight:700,letterSpacing:'-.02em'}},t[0]),
+            h('div',{style:{fontSize:12.5,color:C.muted,margin:'2px 0 13px'}},t[1]),
+            filters
+          ),
+          h('div',{key:view,style:{padding:PAD}}, this.animate(content)),
+          h('div',{style:{padding:'18px 16px 30px',textAlign:'center',borderTop:'1px solid '+C.border}},
+            h('div',{style:{fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:C.faint}},'Designed & built by'),
+            h('div',{style:{fontSize:13,fontWeight:700,color:C.ink,marginTop:3}},'CA Aakash Kasotia'))
+        )
+      );
+    }
+
+    // ===================== DESKTOP =====================
+    return h('div',{ref:this.setRoot,style:{display:'flex',minHeight:'100vh'}},
+      // ---- sidebar ----
+      h('aside',{style:{width:226,flex:'none',background:'linear-gradient(180deg,#0F1A2E 0%,#0C1322 100%)',color:'#fff',display:'flex',flexDirection:'column',position:'sticky',top:0,height:'100vh',borderRight:'1px solid #1A2740',zIndex:6}},
+        h('div',{style:{padding:'24px 22px 20px'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:10}},
+            h('div',{style:{width:34,height:34,borderRadius:9,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',flex:'none',padding:4,boxSizing:'border-box'}}, h('img',{src:(window.__resources&&window.__resources.idcubeMark)||'idcube-mark.png',alt:'IDCUBE',style:{width:'100%',height:'100%',objectFit:'contain',display:'block'}})),
+            h('div',null,
+              h('div',{style:{fontSize:14.5,fontWeight:700,letterSpacing:'-.01em'}},'IDCUBE'),
+              h('div',{style:{fontSize:10.5,color:'#8C9AAE',letterSpacing:'.04em'}},'TRAVEL SPENT ANALYSER'))
+          )
+        ),
+        h('nav',{style:{display:'flex',flexDirection:'column',gap:3,padding:'4px 12px',flex:1}},
+          nav.map(([id,label])=>{ const on=this.state.view===id; return h('button',{key:id,onClick:()=>this.setState({view:id,query:''}),
+            onMouseEnter:e=>{ if(this.state.view!==id){ e.currentTarget.style.background='rgba(255,255,255,.05)'; e.currentTarget.style.color='#C7D2E2'; e.currentTarget.style.transform='translateX(3px)'; } },
+            onMouseLeave:e=>{ if(this.state.view!==id){ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#9AA8BC'; e.currentTarget.style.transform='translateX(0)'; } },
+            style:{position:'relative',display:'flex',alignItems:'center',gap:11,padding:'10px 14px 10px 15px',border:'none',borderRadius:10,cursor:'pointer',fontFamily:'inherit',fontSize:13.5,fontWeight:on?600:500,overflow:'hidden',
+              background:on?'linear-gradient(90deg,rgba(79,70,229,.24),rgba(22,35,58,.5))':'transparent',color:on?'#fff':'#9AA8BC',textAlign:'left',transition:'background .2s ease, color .2s ease, transform .2s ease'}},
+            on?h('span',{style:{position:'absolute',left:0,top:7,bottom:7,width:3,borderRadius:'0 3px 3px 0',background:'linear-gradient(180deg,#6366F1,#0D9488)',boxShadow:'0 0 12px rgba(99,102,241,.8)'}}):null,
+            this.icon(id), label); })
+        ),
+        h('div',{style:{padding:'16px 22px',borderTop:'1px solid #1E2C44',fontSize:11,color:'#7C8AA0',lineHeight:1.6}},
+          h('div',{style:{fontWeight:600,color:'#A9B6CA'}}, (raw.flight.length+raw.hotel.length+raw.train.length)+' bookings'),
+          h('div',null, raw.flight.length+' flights · '+raw.hotel.length+' hotels · '+raw.train.length+' rail'),
+          months.length? h('div',{style:{marginTop:4}}, this.ml(months[0])+' – '+this.ml(months[months.length-1])):null,
+          h('div',{style:{marginTop:11,paddingTop:11,borderTop:'1px solid #1E2C44'}},
+            h('div',{style:{fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'#5E6C82'}},'Designed & built by'),
+            h('div',{style:{fontSize:12,fontWeight:700,color:'#C7D2E2',marginTop:3,letterSpacing:'-.01em'}},'CA Aakash Kasotia'))
+        )
+      ),
+      // ---- main ----
+      h('main',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column'}},
+        h('header',{style:{padding:this.state.scrolled?'13px 30px 13px':'22px 30px 18px',display:'flex',justifyContent:'space-between',alignItems:this.state.scrolled?'center':'flex-end',gap:20,flexWrap:'wrap',
+          borderBottom:'1px solid '+(this.state.scrolled?C.border:'transparent'),
+          background:this.state.scrolled?'rgba(255,255,255,.82)':'rgba(238,241,245,0)',
+          backdropFilter:this.state.scrolled?'blur(10px)':'blur(0px)',WebkitBackdropFilter:this.state.scrolled?'blur(10px)':'blur(0px)',
+          boxShadow:this.state.scrolled?'0 6px 22px rgba(16,27,45,.07)':'none',
+          position:'sticky',top:0,zIndex:5,transition:'padding .32s cubic-bezier(.22,.7,.2,1), background .32s ease, box-shadow .32s ease, border-color .32s ease, align-items .32s ease'}},
+          h('div',{style:{transition:'all .32s cubic-bezier(.22,.7,.2,1)'}},
+            h('h1',{style:{margin:0,fontSize:this.state.scrolled?19:23,fontWeight:700,letterSpacing:'-.02em',transition:'font-size .32s cubic-bezier(.22,.7,.2,1)'}},t[0]),
+            h('div',{style:{fontSize:13,color:C.muted,marginTop:3,maxHeight:this.state.scrolled?0:30,opacity:this.state.scrolled?0:1,overflow:'hidden',transition:'max-height .32s ease, opacity .25s ease, margin .32s ease'}},t[1])
+          ),
+          filters
+        ),
+        h('div',{key:view,style:{padding:PAD,flex:1}}, this.animate(content))
+      )
+    );
+  }
+
+  renderVals(){ return { app: React.createElement(React.Fragment, null, this.renderApp(), this.renderTip(), this.renderIntro()) }; }
+}
+</script>
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<rect width="100" height="100" rx="14" fill="#0E1726"/>
+<path d="M30 70 L42 52 L52 60 L66 38" stroke="#4F46E5" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="66" cy="38" r="4" fill="#0D9488"/>
+<rect x="30" y="74" width="40" height="3.5" rx="1.75" fill="#16233A"/>
+</svg>
+</template>
+</body>
+</html>
