@@ -58,6 +58,8 @@ a:hover{color:var(--accL)}
 .tap{transition:transform .16s cubic-bezier(.2,.9,.25,1),background .2s,border-color .2s,opacity .2s}
 .tap:active{transform:scale(.975)}
 input::placeholder{color:rgba(var(--tc),.34)}
+.tbar{transition:margin-top .28s cubic-bezier(.2,.9,.25,1),opacity .2s ease}
+html.tb-off .tbar{margin-top:calc(-1 * var(--tbh,180px));opacity:0;pointer-events:none}
 @media (pointer:coarse){.tap{position:relative}.tap::after{content:"";position:absolute;inset:-7px -3px}input,textarea,select{font-size:16px!important}}
 </style>
 </helmet>
@@ -126,7 +128,7 @@ input::placeholder{color:rgba(var(--tc),.34)}
 
 <div style="flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;position:relative">
 
-<div style="flex:none;display:flex;align-items:center;flex-wrap:{{ topWrap }};gap:{{ topGap }};padding:{{ topPad }};border-bottom:1px solid rgba(var(--w),.07);background:var(--bar);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);z-index:5">
+<div class="tbar" style="flex:none;display:flex;align-items:center;flex-wrap:{{ topWrap }};gap:{{ topGap }};padding:{{ topPad }};border-bottom:1px solid rgba(var(--w),.07);background:var(--bar);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);z-index:5">
 <div class="tap" onClick="{{ toggleMenu }}" title="Sections" style="flex:none;align-self:flex-start;width:{{ railBtnW }};height:{{ railBtnW }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:12px;border:1px solid {{ burgerBd }};background:{{ burgerBg }};cursor:pointer" style-hover="border-color:rgba(var(--accRGB),.55);background:rgba(var(--accRGB),.14)">
 <div style="width:16px;height:2px;border-radius:2px;background:{{ burgerC }}"></div>
 <div style="width:16px;height:2px;border-radius:2px;background:{{ burgerC }}"></div>
@@ -190,7 +192,7 @@ input::placeholder{color:rgba(var(--tc),.34)}
 </div>
 </div>
 
-<div class="sy" ref="{{ scrollRef }}" onTouchStart="{{ onTS }}" onTouchMove="{{ onTM }}" onTouchEnd="{{ onTE }}" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative">
+<div class="sy mainsc" ref="{{ scrollRef }}" onTouchStart="{{ onTS }}" onTouchMove="{{ onTM }}" onTouchEnd="{{ onTE }}" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative">
 
 <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;height:{{ pullH }};opacity:{{ pullO }};pointer-events:none;overflow:hidden">
 <div style="width:19px;height:19px;border-radius:10px;border:2px solid rgba(var(--accRGB),.25);border-top-color:var(--acc);animation:{{ pullAnim }}"></div>
@@ -3177,6 +3179,20 @@ class Component extends DCLogic {
       if(navigator.vibrate) navigator.vibrate(5);
       this.setState({theme:n}); };
     V.scrollRef=el=>{ this._sc=el; };
+    /* auto-hide top bar: slides up on scroll down, returns on scroll up / at top */
+    if(!window.__tbAH){ window.__tbAH=true;
+      let last=0;
+      const root=document.documentElement;
+      document.addEventListener('scroll',ev=>{
+        const el=ev.target; if(!el||!el.classList||!el.classList.contains('mainsc')) return;
+        const bar=document.querySelector('.tbar'); if(!bar) return;
+        const hid=root.classList.contains('tb-off');
+        const y=el.scrollTop, d=y-last; last=y;
+        const atEnd=y+el.clientHeight>=el.scrollHeight-2;
+        if(y<=8){ if(hid) root.classList.remove('tb-off'); return; }
+        if(d>4&&!hid&&y>40){ root.style.setProperty('--tbh',bar.offsetHeight+'px'); root.classList.add('tb-off'); }
+        else if(d<-4&&hid&&!atEnd) root.classList.remove('tb-off');
+      },{capture:true,passive:true}); }
 
     /* pull to refresh */
     V.pullH = st.pull?Math.round(st.pull)+'px':(st.refreshing?'44px':'0px');
