@@ -2693,10 +2693,21 @@ input::placeholder{color:rgba(var(--tc),.34)}
 <div style="display:{{ bktD }};align-items:center;gap:8px;margin-top:9px;padding-left:11px;border-left:2px solid rgba(var(--accRGB),.32)">
 <div style="flex:none;font:600 8px/1 'IBM Plex Mono',monospace;letter-spacing:.9px;color:rgba(var(--tc),.4)">AGEING</div>
 <div class="sy" style="flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto">
-<sc-for list="{{ bktChips }}" as="b" hint-placeholder-count="5">
+<sc-for list="{{ bktChips }}" as="b" hint-placeholder-count="3">
 <div class="tap" onClick="{{ b.on }}" style="flex:none;display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:13px;border:1px solid {{ b.bd }};background:{{ b.bg }};cursor:pointer;white-space:nowrap">
 <div style="font:600 9.5px/1 'Inter Tight',system-ui;color:{{ b.c }}">{{ b.k }}</div>
 <div style="font:600 8.5px/1 'IBM Plex Mono',monospace;color:{{ b.nc }}">{{ b.n }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:{{ bktSubD }};align-items:center;gap:8px;margin-top:7px;padding-left:22px;border-left:2px solid rgba(var(--accRGB),.18)">
+<div style="flex:none;font:600 8px/1 'IBM Plex Mono',monospace;letter-spacing:.9px;color:rgba(var(--tc),.35)">DUE BY</div>
+<div class="sy" style="flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto">
+<sc-for list="{{ bktSubChips }}" as="b" hint-placeholder-count="5">
+<div class="tap" onClick="{{ b.on }}" style="flex:none;display:flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:12px;border:1px solid {{ b.bd }};background:{{ b.bg }};cursor:pointer;white-space:nowrap">
+<div style="font:600 9px/1 'Inter Tight',system-ui;color:{{ b.c }}">{{ b.k }}</div>
+<div style="font:600 8px/1 'IBM Plex Mono',monospace;color:{{ b.nc }}">{{ b.n }}</div>
 </div>
 </sc-for>
 </div>
@@ -4192,13 +4203,13 @@ class Component extends DCLogic {
       const tgt=IF?(S.dict[IF.field]||[]).indexOf(IF.value):-1;
       const pt=PS?(S.dict.pay||[]).indexOf(PS):-1;
       const OB=(PS==='Not Paid'||PS==='Partially Paid')?(st.obkt||null):null;
-      const ot=OB?(S.dict.ob||[]).indexOf(OB):-1;
+      const OBS=OB?new Set((OB==='Due'?['1-30 Days','31-60 Days','61-90 Days','90+ Days']:[OB]).map(x=>(S.dict.ob||[]).indexOf(x)).filter(i=>i>=0)):null;
       const inScope=row=>{
         if(!keep[row[fi.m]]) return false;
         if(NS.indexOf(ENT[row[fi.e]])<0) return false;
         if(IF&&tgt>=0&&row[fi[IF.field]]!==tgt) return false;
         if(pt>=0&&row[fi.pay]!==pt) return false;
-        if(ot>=0&&row[fi.ob]!==ot) return false;
+        if(OBS&&OBS.size&&!OBS.has(row[fi.ob])) return false;
         return true;
       };
       pickR=key=>{
@@ -4287,8 +4298,8 @@ class Component extends DCLogic {
       if(st.pstat&&st.tab===2){ const pt2=(S.dict.pay||[]).indexOf(st.pstat);
         if(pt2>=0&&r[fi.pay]!==pt2) continue;
         if(st.obkt&&(st.pstat==='Not Paid'||st.pstat==='Partially Paid')){
-          const ot2=(S.dict.ob||[]).indexOf(st.obkt);
-          if(ot2>=0&&r[fi.ob]!==ot2) continue; } }
+          const ot2=new Set((st.obkt==='Due'?['1-30 Days','31-60 Days','61-90 Days','90+ Days']:[st.obkt]).map(x=>(S.dict.ob||[]).indexOf(x)).filter(i=>i>=0));
+          if(ot2.size&&!ot2.has(r[fi.ob])) continue; } }
       out.push(r);
     }
     out.sort((x,y)=>y[fi.m]-x[fi.m]||Math.abs(y[fi.loc])-Math.abs(x[fi.loc]));
@@ -5740,12 +5751,17 @@ class Component extends DCLogic {
           bg:on?'rgba(var(--accRGB),.15)':'rgba(var(--w),.04)',
           c:on?ACCL:'rgba(var(--tc),.62)',
           nc:on?'rgba(var(--accRGB),.85)':'rgba(var(--tc),.34)'}; };
-      const chips=[mk('All buckets',null,bk?bk.total:null)];
-      for(const b of OBO){ const n=bk?(bk.by[b]||0):null; if(bk&&!n) continue;
-        chips.push(mk(OBL[b]||b,b,n)); }
-      V.bktChips=chips;
+      const DUEB=['1-30 Days','31-60 Days','61-90 Days','90+ Days'];
+      const dueN=bk?DUEB.reduce((s,b)=>s+(bk.by[b]||0),0):null;
+      const inDue=obOn==='Due'||DUEB.indexOf(obOn)>=0;
+      const mkTop=(k,v,n,on)=>{ const c=mk(k,v,n); if(on){ c.bd='rgba(var(--accRGB),.5)'; c.bg='rgba(var(--accRGB),.15)'; c.c=ACCL; c.nc='rgba(var(--accRGB),.85)'; } return c; };
+      V.bktChips=[mk('All buckets',null,bk?bk.total:null), mkTop('Due','Due',dueN,inDue), mk('Not due','No Dues',bk?(bk.by['No Dues']||0):null)];
+      const sub=[mk('All due','Due',dueN)];
+      for(const b of DUEB){ const n=bk?(bk.by[b]||0):null; if(bk&&!n) continue; sub.push(mk(b,b,n)); }
+      V.bktSubChips=sub;
+      V.bktSubD=show&&inDue?'flex':'none';
     }
-    const obLbl=(st.obkt&&(psOn==='Not Paid'||psOn==='Partially Paid'))?st.obkt:'';
+    const obLbl=(st.obkt&&(psOn==='Not Paid'||psOn==='Partially Paid'))?(st.obkt==='Due'?'Due (overdue)':st.obkt==='No Dues'?'Not due':'Due · '+st.obkt):'';
     { const r=this.rates(st.fy); V.fxChips='FY '+(24+st.fy)+'-'+(25+st.fy)+' · 1 USD = ₹'+r.usd.toFixed(2)+' · 1 AED = ₹'+r.aed.toFixed(2); }
     V.curOpts=(L.t==='rev'?['FUNC','INR','USD','AED']:['INR','USD','AED']).map(k=>({k,      on:()=>this.nav({cur:k}),
       bd:(st.cur||'INR')===k?'rgba(var(--accRGB),.4)':'rgba(var(--w),.1)',
