@@ -77,7 +77,7 @@ Source: `profit_and_loss_India_Dubai_USA_Updated Oct 26.xlsx`.
   Totals incl. tax: India 1,041,283,706 · Dubai 47,950,529 AED · USA 142,572.
 
 ## Revenue register on taxable value (17 Nov 2026)
-User instruction: revenue = **Untaxed Amount Signed** (taxable billing amount) from the  tab — taxes excluded.
+User instruction: revenue = **Untaxed Amount Signed** (taxable billing amount) from the `Revenue Summary` tab — taxes excluded.
 That column is in invoice currency (USD-billed Dubai invoices and India exports in USD) and credit notes carry a plus sign,
 so the app loads it in functional currency with credit notes negative: taxable = sign(total) × (|verified functional total| − |Tax|).
 All 3,884 invoices matched; amount due / receivables stay on the invoice total (tax is receivable). Payment, aging and dimensions unchanged.
