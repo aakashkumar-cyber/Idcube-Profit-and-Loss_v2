@@ -2396,7 +2396,7 @@ input::placeholder{color:rgba(var(--tc),.34)}
 </div>
 </div>
 <div style="{{ chipWrapStyle }}">
-<div class="tap" onClick="{{ toggleCur }}" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:11px;border:1px solid {{ curChipBd }};background:{{ curChipBg }};cursor:pointer" style-hover="border-color:rgba(var(--w),.26)">
+<div class="tap" onClick="{{ toggleCur }}" title="{{ fxLine }}" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:11px;border:1px solid {{ curChipBd }};background:{{ curChipBg }};cursor:pointer" style-hover="border-color:rgba(var(--w),.26)">
 <div style="font:600 10.5px/1 'IBM Plex Mono',monospace;color:rgba(var(--tc),.86);white-space:nowrap">{{ curChip }}</div>
 <svg width="9" height="6" viewBox="0 0 10 6" fill="none" style="flex:none"><path d="M1 1l4 4 4-4" style="stroke:rgba(var(--tc),.55)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </div>
@@ -2718,12 +2718,15 @@ input::placeholder{color:rgba(var(--tc),.34)}
 <div style="display:flex;align-items:center;gap:7px"><div style="font:700 13px/1 'Inter Tight',system-ui;color:var(--t1)">{{ lensTitle }}</div><div class="tap" onClick="{{ info.lens }}" title="About this section" style="flex:none;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid rgba(var(--accRGB),.38);background:rgba(var(--accRGB),.1);cursor:pointer;font:700 10px/1 'IBM Plex Mono',monospace;color:var(--accL)" style-hover="background:rgba(var(--accRGB),.28)">i</div></div>
 <div style="font:500 9.5px/1.2 'Inter Tight',system-ui;color:rgba(var(--tc),.42);margin-top:5px">{{ lensSub }}</div>
 </div>
-<div style="display:flex;gap:5px;flex:none">
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none">
+<div style="display:flex;gap:5px">
 <sc-for list="{{ curOpts }}" as="c" hint-placeholder-count="3">
 <div class="tap" onClick="{{ c.on }}" style="height:28px;padding:0 10px;border-radius:9px;display:flex;align-items:center;border:1px solid {{ c.bd }};background:{{ c.bg }};cursor:pointer">
 <div style="font:600 9.5px/1 'IBM Plex Mono',monospace;color:{{ c.c }}">{{ c.k }}</div>
 </div>
 </sc-for>
+</div>
+<div title="Conversion rates used to translate between currencies (FY average, set by the CFO)" style="font:500 8.5px/1.2 'IBM Plex Mono',monospace;color:rgba(var(--tc),.45);white-space:nowrap">{{ fxChips }}</div>
 </div>
 </div>
 <div style="display:flex;align-items:baseline;gap:20px;padding:15px 17px;border-bottom:1px solid rgba(var(--w),.075);background:rgba(var(--w),.025)">
@@ -3141,6 +3144,7 @@ input::placeholder{color:rgba(var(--tc),.34)}
 </div>
 </sc-for>
 <div style="display:{{ curNoteD }};font:400 9px/1.5 'Inter Tight',system-ui;color:rgba(var(--tc),.4);padding:7px 10px 4px;text-wrap:pretty">{{ curNote }}</div>
+<div style="font:500 8.5px/1.5 'IBM Plex Mono',monospace;color:rgba(var(--tc),.5);padding:8px 10px 4px;border-top:1px solid rgba(var(--w),.08);margin-top:3px;text-wrap:pretty">{{ fxLine }}</div>
 </div>
 </div>
 </div>
@@ -5361,10 +5365,12 @@ class Component extends DCLogic {
 
     const CURD={FUNC:['Functional','Each book in its own currency'],
       INR:['INR ₹','Indian rupee · '+(this.props.units||'lakh')],
-      USD:['USD $','US dollar at '+this.rates(st.fy).usd.toFixed(2)],
-      AED:['AED د.إ','UAE dirham at '+this.rates(st.fy).aed.toFixed(2)]};
+      USD:['USD $','US dollar · 1 USD = ₹'+this.rates(st.fy).usd.toFixed(2)+' · FY '+(24+st.fy)+'-'+(25+st.fy)],
+      AED:['AED د.إ','UAE dirham · 1 AED = ₹'+this.rates(st.fy).aed.toFixed(2)+' · FY '+(24+st.fy)+'-'+(25+st.fy)]};
     const gcur=st.cur||'INR';
-    V.curChip=gcur==='FUNC'?'FUNC':gcur;
+    const fxR=this.rates(st.fy), fxFY='FY '+(24+st.fy)+'-'+(25+st.fy);
+    V.fxLine=fxFY+' rates · 1 USD = ₹'+fxR.usd.toFixed(2)+' · 1 AED = ₹'+fxR.aed.toFixed(2)+' · 1 USD = '+(fxR.usd/fxR.aed).toFixed(4)+' AED';
+    V.curChip=gcur==='FUNC'?'FUNC':gcur==='USD'?'USD · ₹'+(+fxR.usd.toFixed(2)):gcur==='AED'?'AED · ₹'+(+fxR.aed.toFixed(2)):gcur;
     V.toggleCur=()=>this.setState({showCur:!st.showCur});
     V.closeCur=()=>this.setState({showCur:false});
     V.curMenuD=st.showCur?'flex':'none';
@@ -5740,6 +5746,7 @@ class Component extends DCLogic {
       V.bktChips=chips;
     }
     const obLbl=(st.obkt&&(psOn==='Not Paid'||psOn==='Partially Paid'))?st.obkt:'';
+    { const r=this.rates(st.fy); V.fxChips='FY '+(24+st.fy)+'-'+(25+st.fy)+' · 1 USD = ₹'+r.usd.toFixed(2)+' · 1 AED = ₹'+r.aed.toFixed(2); }
     V.curOpts=(L.t==='rev'?['FUNC','INR','USD','AED']:['INR','USD','AED']).map(k=>({k,      on:()=>this.nav({cur:k}),
       bd:(st.cur||'INR')===k?'rgba(var(--accRGB),.4)':'rgba(var(--w),.1)',
       bg:(st.cur||'INR')===k?'rgba(var(--accRGB),.14)':'rgba(var(--w),.04)',
