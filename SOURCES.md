@@ -76,6 +76,16 @@ Source: `profit_and_loss_India_Dubai_USA_Updated Oct 26.xlsx`.
   Approximate, check with sheet owner: INV/2026/258 CDN Kuwait (6 Nov 26) 1,036,790.97 assumed USD → 3,807,615 AED; 4 Computer Guard (Israel) India invoices at FY rate; 5 small Dubai exports with no history.
   Totals incl. tax: India 1,041,283,706 · Dubai 47,950,529 AED · USA 142,572.
 
+## Revenue register on taxable value (17 Nov 2026)
+User instruction: revenue = **Untaxed Amount Signed** (taxable billing amount) from the  tab — taxes excluded.
+That column is in invoice currency (USD-billed Dubai invoices and India exports in USD) and credit notes carry a plus sign,
+so the app loads it in functional currency with credit notes negative: taxable = sign(total) × (|verified functional total| − |Tax|).
+All 3,884 invoices matched; amount due / receivables stay on the invoice total (tax is receivable). Payment, aging and dimensions unchanged.
+FY 26-27 Apr–Nov (to 13 Nov), functional: **India 247,911,729.96 (786 lines) · Dubai 12,062,280.56 AED (259) · USA 15,352.15 USD (4)**.
+Raw column sum for India is 261,726,464.40 — it counts 24 credit notes (85,53,705) as positive and 13 USD export invoices at USD face value.
+FY 24-25: India 365,029,765 · Dubai 23,267,294 AED · USA 95,335 · FY 25-26: India 274,914,206 · Dubai 11,690,287 AED · USA 31,885.
+Build script: scratchpad tools/build-taxable.js (reproduces revenue-data.js dims l/u/n exactly before switching).
+
 ## India Sep-26 purchase adjustment (12 Oct 2026)
 · Workbook `…Updated Sep 26-e6114633.xlsx`: India FY 26-27 **Purchase Expense (PL170001), Sep-26** raised by ₹50,00,000 — ₹1,11,01,566.23 → ₹1,61,01,566.23 (cell H21, formula `11101566.23+5000000`). No other cell changed.
 · The sheet's cached subtotals (H20 Cost of Revenue, H14 Gross Profit, H8 Net Profit) were not recalculated in the file; the app recomputes them, so India Sep Net Profit is now ₹50L lower than the stale H8 value (₹44,44,509.53 → ≈ −₹5,55,490).
