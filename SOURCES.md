@@ -117,8 +117,8 @@ Source: `Revenue Summary` tab of `uploads/profit_and_loss_India_Dubai_USA_Update
 ## FX translation (set 21 Sep 2026)
 Statement, registers and intercompany all use FY-fixed rates set by the CFO — no peg, the two
 currencies are independent:
-· USD → INR: FY 24-25 **85** · FY 25-26 **88** · FY 26-27 **100**
-· AED → INR: FY 24-25 **22.5** · FY 25-26 **23** · FY 26-27 **24**
+· USD → INR: FY 24-25 **85** · FY 25-26 **88** · FY 26-27 **95** (was 100 until 17 Nov 2026)
+· AED → INR: FY 24-25 **22.5** · FY 25-26 **23** · FY 26-27 **25.87** (stored 25.8679 = 95 ÷ 3.6725, so 1 USD = 3.6725 AED exactly; was 24)
 Intercompany invoices (all raised in USD) translate at the USD rate for their year.
 Editable in the app's Tweaks panel (usdFy25/26/27, aedFy25/26/27).
 
