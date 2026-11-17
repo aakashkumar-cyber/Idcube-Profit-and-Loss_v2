@@ -1378,7 +1378,7 @@ const USERS=[
 const FY=[{k:'FY 24-25',s:0},{k:'FY 25-26',s:12},{k:'FY 26-27',s:24}];
 const TABS=['Overview','Profit and Loss statement','Revenue','Costs','Compare','Travel','Analytical Review'];
 const TABMASK=127;
-const PLN=[12,12,6], RVN=[12,12,7];
+const PLN=[12,12,7], RVN=[12,12,8];
 const ALLENT=[0,1,2,3,4];
 const ENT=['India','Dubai','USA','Purple Sphere','Sapne'];
 const ENTC=['#F79824','#4FC3F7','#A78BFA','#E879A6','#5EEAD4'];
@@ -2652,7 +2652,7 @@ class Component extends DCLogic {
       +'equivalent in brackets when the number is large. State the scope (which books, which months) so the reader can '
       +'tie it back. Use short bullet lines ("Label — value") rather than tables or markdown headers. Never use emoji. '
       +'If the data cannot answer the question, say exactly what is missing rather than guessing. '
-      +'Flag the two traps when relevant: the expense register covers FY 25-26 and FY 26-27 (to Jul 2026) but not FY 24-25, and "Other expenses" in the ledger '
+      +'Flag the two traps when relevant: the expense register covers FY 25-26 and FY 26-27 (to Sep 2026; Oct 2026 expense lines not yet loaded) but not FY 24-25, and "Other expenses" in the ledger '
       +'is wider than the Schedule III line (it carries income tax, FX loss, interest on TDS, loss on sale of assets, '
       +'installation and repair).';
   }
