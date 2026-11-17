@@ -76,6 +76,22 @@ Source: `profit_and_loss_India_Dubai_USA_Updated Oct 26.xlsx`.
   Approximate, check with sheet owner: INV/2026/258 CDN Kuwait (6 Nov 26) 1,036,790.97 assumed USD → 3,807,615 AED; 4 Computer Guard (Israel) India invoices at FY rate; 5 small Dubai exports with no history.
   Totals incl. tax: India 1,041,283,706 · Dubai 47,950,529 AED · USA 142,572.
 
+## Revenue register — live from Google Sheet (17 Nov 2026)
+Source: **NRR Reports** (owner Raghu Nandan Gupta, `1k3rHn9ak2TC_AcJ510lS_BSwXjADjjGY1ElE6aPvAOw`), tab **`Revenue_r`**, updated daily.
+Mirrored by `=IMPORTRANGE(…,"Revenue_r!A:AH")` into the feeder sheet `1kw-1baC2kuHf8FHD0wIkkp2Xe9A7u427WV6MZWEIxlY` (gid 0, "Anyone with the link: Viewer"),
+which the GitHub Action `.github/workflows/refresh-revenue.yml` downloads as CSV every 3 hours and feeds to `tools/build-revenue.js`.
+· Rows: `Fiscal_year` 2024, 2025, 2026 only (FY 24-25 → FY 26-27). Revenue = **Untaxed Amount Signed** — in this tab already taxable,
+  functional currency, credit notes negative (unlike the Excel's Revenue Summary).
+· Invoices already loaded keep their dimensions (customer, team, state, region, category); amount, USD, payment status, amount due,
+  days outstanding, ageing and delay buckets refresh every run. New invoices are built from the feed; a blank sales team takes the
+  salesperson's usual team, a blank state the customer's usual state. Month-only / junk invoice dates keep the date already held.
+· Guards: aborts without publishing if the feed is unreadable, has < 1,000 FY24-26 invoices or > 5% fewer than loaded, has duplicate
+  invoice numbers, or if the register fails to tie to the feed's own entity × FY totals.
+· First load: 3,893 invoices to 16 Nov 2026. FY 2026: India 249,568,162.79 · Dubai 12,062,280.69 AED · USA 15,352.15 USD (ties to the
+  NRR summary). FY 2025: India 274,914,750.75 · Dubai 11,690,287.40 · USA 31,884.79. FY 2024: India 365,061,201.82 · Dubai 23,282,086.19 · USA 95,334.57.
+  Supersedes the Excel-based taxable conversion; 5 export invoices move to the sheet's own INR figure (e.g. INV/DL/2026/499 6,17,330 → 5,84,217.04).
+· The P&L statement is NOT driven by this feed — it still comes from the Excel workbook.
+
 ## Revenue register on taxable value (17 Nov 2026)
 User instruction: revenue = **Untaxed Amount Signed** (taxable billing amount) from the `Revenue Summary` tab — taxes excluded.
 That column is in invoice currency (USD-billed Dubai invoices and India exports in USD) and credit notes carry a plus sign,
